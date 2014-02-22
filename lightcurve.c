@@ -20,22 +20,22 @@ double eps = 1e-7;
    b2   decrease intensity factor for a smaller star 
    T    orbital period */
    
-double r = 1;
-double rad1 = 1;
-double rad2 = 0.9;
+double r = 3;
+double rad1 = 2;
+double rad2 = 1.75;
 double b1 = 1;
 double b2 = 0.9;
 double T = 1.6;
 double m1 = 1.1;
 double m2 = 0.9;
 
-/* Statistics of stars configuration cases 
-   cases: 
-   0 - far away
-   1 - contiguous
-   2 - overlap, acute angle
-   3 - overlap, right angle
-   4 - overlap, obtuse angle
+/* Statistics of stars configuration cases:
+   0 - far away ( a > r1 + r2 )
+   1 - contiguous ( a == r1 + r2 )
+   2 - overlap, acute arc ( a > max radius && a < r1 + r2)
+   3 - overlap, right arc ( a < max radius )
+   4 - overlap, obtuse arc ( a < max radius )
+   5 - full eclipse
 */
 int cases_count[MAX_NUM_CASES];
 
@@ -59,15 +59,19 @@ double vdist(double incl, double pa)
    a visible distance between stars 
    incl inclination angle
 */
-double v_circle_square(double t, double a, double incl)
+double v_circle_square(double t, double incl)
 {
+  // square terms
+  double s = 0;   // sum of circles
+  s = pi * ( pow(rad1, 2) + pow(rad2, 2) );
+
   // current positional angle of a secondary star 
   double phi = 0;
   phi = 2 * pi / T * t;
 
   // visible distance
   double vd = vdist(incl, phi);
-
+  printf("vd : %f\n", vd);
   // upper edge
   double upper_edge = rad1 + rad2;
 
@@ -89,27 +93,107 @@ double v_circle_square(double t, double a, double incl)
   // stars are contiguous to each other
   if ( abs( upper_edge - vd ) <= eps )
     {
-      return  pi * ( rad1 * rad1 + rad2 * rad2 );
+      printf("1\n");
+      return  s;
     }
 
   // stars are far away from each other
-  if ( abs( upper_edge - vd ) > eps )
+  if ( vd - upper_edge > eps )
     {
-      return  pi * ( rad1 * rad1 + rad2 * rad2 );
+      printf("2\n");
+      return  s;
     }
 
   // stars are overlapping ( includes subcases )
+  double psi1 = 0;
+  double psi2 = 0;
+  double arg1 = 0;
+  double arg2 = 0;
+
+  printf("vd: %f\n", vd);
+  arg1 = (pow(vd, 2) + pow(rad1, 2) - pow(rad2, 2)) / 2.0 / vd / rad1;
+  arg2 = (pow(vd, 2) + pow(rad2, 2) - pow(rad1, 2)) / 2.0 / vd / rad2;
+
+  psi1 = acos(arg1);
+  psi2 = acos(arg2);
+
+  printf("psi1: %f\n", psi1 * 180 / pi);
+  printf("psi2: %f\n", psi2 * 180 / pi);
+
+  // if rad1 is max
+  if ( is_rad1_max )
+    {
+      // square terms
 
 
+      double segm1 = pow(rad1, 2) * ( psi1 - sin(psi1) ) / 2.0;
+
+      double segm2 = pow(rad2, 2) * ( psi2 - sin(psi2) ) / 2.0;
+
+      double semisquare = pi * pow(rad2 ,2) / 2.0;
+
+      double obtuse_arc = pow(rad2, 2) * ( 2.0 * pi - psi2 ) / 2.0;
+
+      double triangle  = pow(rad2, 2) * sin(psi2) / 2.0;
+
+      printf("s: %f\n", s);
+      printf("segm1: %f\n", segm1);
+      printf("segm2: %f\n", segm2);
+      printf("semisquare: %f\n", semisquare);
+      printf("obtuse arc: %f\n", obtuse_arc);
+      printf("triangle: %f\n", triangle);
+      
+      // case 3 (right arc)
+      if ( abs( psi2 - pi / 2 ) <= eps )
+	return s - semisquare - segm1;    
+	  
+      // case 2 (acute arc)
+      if ( psi2 - pi / 2 < eps )
+	return s - segm1 - segm2;
+
+      // case 4 (obtuse arc)
+      return s - segm1 - obtuse_arc - triangle;	
+    }
   return 0;
 }
 
-int main( int arc, const char **argv )
-{ 
-  printf("vdist tests:\n");
+void tests()
+{
+  printf("tests:\n");
+
+  printf("vdist:\n");
+
   printf("%f\n", vdist(0, pi / 2));
   printf("%f\n", vdist(pi / 3, pi / 2));
   printf("%f\n", vdist(pi / 4, pi / 2));
 
- 
+  printf("v_circle_square:\n");
+
+  printf("%f\n", v_circle_square(0, pi / 2) );
+}
+
+void run()
+{
+  int N = 100;
+  double a = 0;
+  double b = T;
+  double h = (b - a) / (N - 1);
+  double t = a;
+  
+  FILE *f;
+  f = fopen("output.txt", "w");
+
+  for (int i = 0; i < N; i++ )
+    {
+      fprintf(f, "%f %f\n", t, v_circle_square(t, pi / 2));
+      t = t + h;
+    }
+
+	fclose(f);
+}
+
+int main( int arc, const char **argv )
+{ 
+  tests();
+  run();
 }
