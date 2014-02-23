@@ -20,7 +20,7 @@ double eps = 1e-7;
    b2   decrease intensity factor for a smaller star 
    T    orbital period */
    
-double r = 3;
+double r = 5;
 double rad1 = 2;
 double rad2 = 1.75;
 double b1 = 1;
@@ -91,18 +91,25 @@ double v_circle_square(double t, double incl)
   double lower_edge = max - min;
 
   // stars are contiguous to each other
-  if ( abs( upper_edge - vd ) <= eps )
+  if ( fabs( upper_edge - vd ) <= eps )
     {
       printf("1\n");
       return  s;
     }
 
   // stars are far away from each other
-  if ( vd - upper_edge > eps )
+  if ( vd > upper_edge )
     {
       printf("2\n");
       return  s;
     }
+
+  // full eclipse (case 5)
+  if ( is_rad1_max &&  vd + rad2 - rad1 <= eps )
+    {
+      return pi * pow(rad1, 2);
+    }
+       
 
   // stars are overlapping ( includes subcases )
   double psi1 = 0;
@@ -126,15 +133,16 @@ double v_circle_square(double t, double incl)
       // square terms
 
 
-      double segm1 = pow(rad1, 2) * ( psi1 - sin(psi1) ) / 2.0;
+      
+      double segm1 = pow(rad1, 2) * ( 2.0l * psi1 - sin(2 * psi1) ) / 2.0;
 
-      double segm2 = pow(rad2, 2) * ( psi2 - sin(psi2) ) / 2.0;
+      double segm2 = pow(rad2, 2) * ( 2.0l * psi2 - sin(2 * psi2) ) / 2.0;
 
       double semisquare = pi * pow(rad2 ,2) / 2.0;
 
-      double obtuse_arc = pow(rad2, 2) * ( 2.0 * pi - psi2 ) / 2.0;
+      double obtuse_arc = pow(rad2, 2) * ( 2.0l * psi2 ) / 2.0;
 
-      double triangle  = pow(rad2, 2) * sin(psi2) / 2.0;
+      double triangle  = pow(rad2, 2) * sin( -2.0l * psi2) / 2.0;
 
       printf("s: %f\n", s);
       printf("segm1: %f\n", segm1);
@@ -143,17 +151,22 @@ double v_circle_square(double t, double incl)
       printf("obtuse arc: %f\n", obtuse_arc);
       printf("triangle: %f\n", triangle);
       
-      // case 3 (right arc)
-      if ( abs( psi2 - pi / 2 ) <= eps )
-	return s - semisquare - segm1;    
 	  
       // case 2 (acute arc)
-      if ( psi2 - pi / 2 < eps )
+      if ( psi2 - pi / 2.0l <= eps )
 	return s - segm1 - segm2;
 
+
+      // case 3 (right arc)
+      if ( fabs(1.0l * psi2 - pi / 2.0l ) <= eps )
+	{
+	  
+	  return s - semisquare - segm1;    
+	}
       // case 4 (obtuse arc)
       return s - segm1 - obtuse_arc - triangle;	
     }
+
   return 0;
 }
 
@@ -161,11 +174,14 @@ void tests()
 {
   printf("tests:\n");
 
+  printf("eps: %f\n", eps);
+
   printf("vdist:\n");
 
   printf("%f\n", vdist(0, pi / 2));
   printf("%f\n", vdist(pi / 3, pi / 2));
   printf("%f\n", vdist(pi / 4, pi / 2));
+  printf("%f\n", vdist(1.332797, pi / 2));
 
   printf("v_circle_square:\n");
 
