@@ -63,7 +63,8 @@ double v_circle_square(double t, double incl)
 {
   // square terms
   double s = 0;   // sum of circles
-  s = pi * ( pow(rad1, 2) + pow(rad2, 2) );
+  //s = pi * ( pow(rad1, 2) + pow(rad2, 2) );
+  s = b1 * pi * pow(rad1, 2) + b2 * pi * pow(rad2, 2);
 
   // current positional angle of a secondary star 
   double phi = 0;
@@ -87,8 +88,19 @@ double v_circle_square(double t, double incl)
       is_rad1_max = 1;
     }
 
-  // lower_edge
-  double lower_edge = max - min;
+  // define coef of intensity
+  double light_decrease = 0;
+  double light_increase = 0;
+  if ( phi - pi <= eps )
+    {
+      light_decrease = b2;
+      light_increase = b1; 
+    }
+  else 
+    {
+      light_decrease = b1;
+      light_increase = b2;
+    }
 
   // stars are contiguous to each other
   if ( fabs( upper_edge - vd ) <= eps )
@@ -107,7 +119,7 @@ double v_circle_square(double t, double incl)
   // full eclipse (case 5)
   if ( is_rad1_max &&  vd + rad2 - rad1 <= eps )
     {
-      return pi * pow(rad1, 2);
+      return light_increase * pi * pow(rad1, 2);
     }
        
 
@@ -153,18 +165,18 @@ double v_circle_square(double t, double incl)
       
 	  
       // case 2 (acute arc)
-      if ( psi2 - pi / 2.0l <= eps )
-	return s - segm1 - segm2;
+      if ( psi2 - pi / 2.0l < eps )
+	return s - light_decrease * ( segm1 + segm2 );
 
 
       // case 3 (right arc)
       if ( fabs(1.0l * psi2 - pi / 2.0l ) <= eps )
 	{
 	  
-	  return s - semisquare - segm1;    
+	  return s - light_decrease * ( semisquare + segm1);    
 	}
       // case 4 (obtuse arc)
-      return s - segm1 - obtuse_arc - triangle;	
+      return s - light_decrease * ( segm1 + obtuse_arc + triangle);	
     }
 
   return 0;
