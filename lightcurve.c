@@ -138,7 +138,11 @@ double v_circle_square(double t, double incl)
   // full eclipse (case 5)
   if ( is_rad1_max &&  vd + rad2 - rad1 <= eps )
     {
-      return light_increase * pi * pow(rad1, 2);
+      if ( phi - pi <= eps )
+	return light_increase * pi * pow(rad1, 2);
+      return light_increase * pi * pow(rad2, 2) +
+	light_decrease * pi * pow(rad1, 2) -
+	light_decrease * pi * pow(rad2, 2);
     }
        
 
@@ -407,7 +411,7 @@ void tests()
 
 void run()
 {
-  int N = 100;
+  int N = 2450;
   double a = 0;
   double b = T;
   double h = (b - a) / (N - 1);
@@ -421,7 +425,8 @@ void run()
       fprintf(f, "%lf %lf %lf\n",
 	      t,
 	      2.0 * pi / T * t * 180 / pi,
-	      v_ellipse_square(t, pi / 2.0L));
+	      //v_ellipse_square(t, pi / 2.0L));
+	      v_circle_square(t, pi / 2.0L));
       t = t + h;
     }
 
