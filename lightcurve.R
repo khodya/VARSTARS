@@ -29,11 +29,13 @@ rad2 <- 1
 lux1 <- 1
 
 # lux2 -luminosity coef of star B
-lux2 <- 0.6
+lux2 <- 0.8
 
 # incl -inclination angle
 incl <- 70 * pi / 180
 
+# initial phase
+phase <- 9.2 * pi / 180
 
 ## function: vdist
 # This function will return a visible distance between stars
@@ -62,7 +64,7 @@ v_circle_square <- function(t, incl)
 	s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
 
 	# current positional angle of a star B
-	phi <- 2 * pi / P * t
+	phi <- 2 * pi / P * t + phase
 
 	# visible distance
 	vd <- vdist(incl, phi)
@@ -203,9 +205,10 @@ draw <- function()
   text(1.1,6.85, paste("separation", r), adj=0)
   text(1.1,6.90, paste("светимости", lux1, ";", lux2), adj=0)
   text(1.1,6.95, paste("период", P), adj=0)
+  text(1.1,7.0, paste("фаза", phase * 180 / pi), adj=0)
   
   # plot O-C
-  plot(res[,1],abs(res[,2]-res[,3]), pch=18,
+  plot(res[,1],abs(res[,2]-res[,3]), pch=".", type="l",
        main="Спектр невязок",
        ylab="величина невязки",
        xlab="период в долях (дни)")
