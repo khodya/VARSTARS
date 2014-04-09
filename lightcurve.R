@@ -20,16 +20,16 @@ sep <- 6.5
 r <- 5
 
 # rad1 -radius of star A
-rad1 <- 2
+rad1 <- 1.1
 
 # rad2 -radius of star B
-rad2 <- 1.75
+rad2 <- 1
 
 # lux1 -luminosity coef of star A
-lux1 <- 1.1
+lux1 <- 1
 
 # lux2 -luminosity coef of star B
-lux2 <- 0.9
+lux2 <- 0.6
 
 # incl -inclination angle
 incl <- pi / 2
@@ -114,10 +114,10 @@ v_circle_square <- function(t, incl)
 	if ( is_rad1_max && vd + rad2 - rad1 <= eps )
 	{
 		if ( phi - pi <= eps )
-		   return( light_up * pi * rad1**2 )
-		return( light_up * pi * rad2**2 +
-			   light_down * pi * rad1**2 -
-			   light_down * pi * rad2**2 )
+		   return( s + light_down * pi * rad2**2 )
+		return( s + light_up * pi * rad2**2 +
+              light_down * pi * rad1**2 -
+              light_down * pi * rad2**2)
 	} 
 
 	# stars are overlapping (inludes subcases )
@@ -138,25 +138,28 @@ v_circle_square <- function(t, incl)
 		
 		if ( psi2 - pi / 2 < eps )
 		{
-		   return( s - light_down * (segm1 + segm2) )
+		   return( s + light_down * (segm1 + segm2) )
 		}		   
 
 		if ( abs( psi2 - pi / 2 ) <= eps )
 		{
-		   return( s- light_down * ( semisquare + segm1 ) )
+		   return( s+ light_down * ( semisquare + segm1 ) )
 		}
 
-		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
+		return( s + light_down * ( segm1 + obtuse_arc + triangle ) )
 	}
-		
+	
+  return(0)
 }
 
-res <-c()
-obs <-  read.table("obs/pmm_all_1610155_15")
+
 run <- function()
 {
   obs <-  read.table("obs/pmm_all_1610155_15")
   
+  res <- c()
   for (q in 1:nrow(obs))
-    res <- rbind(res, obs[q,1], v_circle_square(obs[q,1], pi / 2), obs[q,2])
+    res <- rbind(res, c(obs[q,1], v_circle_square(obs[q,1], pi / 2), obs[q,2]))
+  
+  return(res)
 }
