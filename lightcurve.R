@@ -17,7 +17,7 @@ par <- 2.0
 sep <- 6.5
 
 # r -radius of the orbit
-r <- 5
+r <- 3
 
 # rad1 -radius of star A
 rad1 <- 1.1
@@ -32,7 +32,7 @@ lux1 <- 1
 lux2 <- 0.6
 
 # incl -inclination angle
-incl <- pi / 2
+incl <- 70 * pi / 180
 
 
 ## function: vdist
@@ -114,8 +114,8 @@ v_circle_square <- function(t, incl)
 	if ( is_rad1_max && vd + rad2 - rad1 <= eps )
 	{
 		if ( phi - pi <= eps )
-		   return( s + light_down * pi * rad2**2 )
-		return( s + light_up * pi * rad2**2 +
+		   return( light_up * pi * rad1**2 )
+		return( light_up * pi * rad2**2 +
               light_down * pi * rad1**2 -
               light_down * pi * rad2**2)
 	} 
@@ -138,15 +138,15 @@ v_circle_square <- function(t, incl)
 		
 		if ( psi2 - pi / 2 < eps )
 		{
-		   return( s + light_down * (segm1 + segm2) )
+		   return( s - light_down * (segm1 + segm2) )
 		}		   
 
 		if ( abs( psi2 - pi / 2 ) <= eps )
 		{
-		   return( s+ light_down * ( semisquare + segm1 ) )
+		   return( s - light_down * ( semisquare + segm1 ) )
 		}
 
-		return( s + light_down * ( segm1 + obtuse_arc + triangle ) )
+		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
 	}
 	
   return(0)
@@ -157,9 +157,63 @@ run <- function()
 {
   obs <-  read.table("obs/pmm_all_1610155_15")
   
+  s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
+  
   res <- c()
   for (q in 1:nrow(obs))
-    res <- rbind(res, c(obs[q,1], v_circle_square(obs[q,1], pi / 2), obs[q,2]))
-  
+    res <- rbind(res, c(obs[q,1], -0.38 +
+                        apmag + 2.5*log10(s/v_circle_square(obs[q,1], incl)),
+                        obs[q,2]
+                         ))
+  write.table(res,"model.dat", col.names=F, row.names=F)
   return(res)
 }
+
+res <- run()
+
+draw <- function()
+{
+  
+  # plot for file
+  dev.new()
+  filename <- paste("plot",
+                   "incl", incl * 180 / pi,
+                   "radii",rad1,rad2,
+                   "sep",r,
+                   "lux",lux1,lux2,
+                   "P",P,
+                   
+                   sep="_")
+  par(mfrow=c(1,2))
+  
+  # plot O,C
+  plot(res[,1], res[,2], col=rgb(0,0,0), pch = 18,
+       main=" рива€ блеска GU CMa",
+       ylab="видима€ зв. величина",
+       xlab="период в дол€х (дни)",
+       ylim=c(7,6))
+  points(res[,1], res[,3], col=rgb(0,0,1), pch =18)
+  #text(0.35,7.5,col=rgb(0,0,0),"model")
+  #text(0.35,7.7, col=rgb(0,0,1),"data")
+  legend("bottomleft", c("model", "data"), pch=c(18, 18),
+         col=c(rgb(0,0,0), rgb(0,0,1)) )
+  text(1.1,6.70, "параметры модели", adj=0)
+  text(1.1,6.75, paste("наклон", incl * 180 / pi), adj=0)
+  text(1.1,6.80, paste("радиусы", rad1, ";", rad2), adj=0)
+  text(1.1,6.85, paste("separation", r), adj=0)
+  text(1.1,6.90, paste("светимости", lux1, ";", lux2), adj=0)
+  text(1.1,6.95, paste("период", P), adj=0)
+  
+  # plot O-C
+  plot(res[,1],abs(res[,2]-res[,3]), pch=18,
+       main="—пектр нев€зок",
+       ylab="величина нев€зки",
+       xlab="период в дол€х (дни)")
+  #pdf(paste0("plots/",filename), width = 4, height = 4)
+  dev.copy2pdf(
+    file = paste0("plots/",filename,".pdf"),
+    width=16, height=8)
+  #dev.off()
+}
+
+draw()
