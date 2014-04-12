@@ -154,8 +154,29 @@ v_circle_square <- function(t, incl)
   return(0)
 }
 
+# Funcion: model()
+# This function calls a square model
+#
+# Input parameters:
+# t -time (phase of a period T)
+#
+# Returns:
+# modelled square at the "t" moment
+model <- function(t)
+{
+  s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
+  
+  val <- -0.38 + apmag + 2.5*log10(s/v_circle_square(t, incl))
+  return(val)
+}
 
-run <- function()
+# Function: readSmoothData()
+#
+# This function reads smoothed data.
+#
+# Returns: a data table of smoothed data
+#
+readSmoothData <- function()
 {
   obs <-  read.table("obs/pmm_all_1610155_15")
   
@@ -163,60 +184,97 @@ run <- function()
   
   res <- c()
   for (q in 1:nrow(obs))
-    res <- rbind(res, c(obs[q,1], -0.38 +
-                        apmag + 2.5*log10(s/v_circle_square(obs[q,1], incl)),
+    res <- rbind(res, c(obs[q,1], model(obs[q,1]),#-0.38 +
+    #                    apmag + 2.5*log10(s/v_circle_square(obs[q,1], incl)),
                         obs[q,2]
                          ))
   write.table(res,"model.dat", col.names=F, row.names=F)
   return(res)
+  #return(obs)
 }
+res <- readSmoothData()
 
-res <- run()
+# This function reads raw data
+# and returns a data fold
+readRawData <- function()
+{
+  rawd <- read.table("obs/all_10_13")
+  res <- c()
+  for(t in 1:nrow(rawd))
+    res <- rbind(res, c(rawd[t,1] %% P, rawd[t,2]))
+  return(res[order(res[,1]),])
+}
+rawd <- readRawData()
 
 draw <- function()
 {
   
-  # plot for file
+  # open new device 
   dev.new()
+  
+  # prepare filename for pdf
   filename <- paste("plot",
                    "incl", incl * 180 / pi,
                    "radii",rad1,rad2,
                    "sep",r,
                    "lux",lux1,lux2,
                    "P",P,
-                   
                    sep="_")
-  par(mfrow=c(1,2))
   
-  # plot O,C
-  plot(res[,1], res[,2], col=rgb(0,0,0), pch = 18,
-       main="Кривая блеска GU CMa",
-       ylab="видимая зв. величина",
-       xlab="период в долях (дни)",
+  # set plot parameters for 4 graphs on a page
+  par(mfrow=c(2,2))
+  
+  # plot Smooth vs Model
+  plot(res[,1], res[,2], col=rgb(0,0,0), pch = 18, cex=0.5,
+       main="GU CMa light curve",
+       ylab="apparent magnitude (m)",
+       xlab="period (days)",
        ylim=c(7,6))
-  points(res[,1], res[,3], col=rgb(0,0,1), pch =18)
+  points(res[,1], res[,3], col=rgb(0,0,1), pch =18, cex=0.5)
   #text(0.35,7.5,col=rgb(0,0,0),"model")
   #text(0.35,7.7, col=rgb(0,0,1),"data")
   legend("bottomleft", c("model", "data"), pch=c(18, 18),
          col=c(rgb(0,0,0), rgb(0,0,1)) )
-  text(1.1,6.70, "параметры модели", adj=0)
-  text(1.1,6.75, paste("наклон", incl * 180 / pi), adj=0)
-  text(1.1,6.80, paste("радиусы", rad1, ";", rad2), adj=0)
+  text(1.1,6.70, "parameters", adj=0)
+  text(1.1,6.75, paste("inclination", incl * 180 / pi), adj=0)
+  text(1.1,6.80, paste("radii", rad1, ";", rad2), adj=0)
   text(1.1,6.85, paste("separation", r), adj=0)
-  text(1.1,6.90, paste("светимости", lux1, ";", lux2), adj=0)
-  text(1.1,6.95, paste("период", P), adj=0)
-  text(1.1,7.0, paste("фаза", phase * 180 / pi), adj=0)
+  text(1.1,6.90, paste("lux factors", lux1, ";", lux2), adj=0)
+  text(1.1,6.95, paste("period", P), adj=0)
+  text(1.1,7.0, paste("initial phase", phase * 180 / pi), adj=0)
   
-  # plot O-C
+  # plot Residuals Smooth vs Model
   plot(res[,1],abs(res[,2]-res[,3]), pch=".", type="l",
-       main="Спектр невязок",
-       ylab="величина невязки",
-       xlab="период в долях (дни)")
-  #pdf(paste0("plots/",filename), width = 4, height = 4)
+       main="Residuals (smoothed data)",
+       ylab="app. magn. (m)",
+       xlab="period (days)")
+  
+  # 
+  w <- read.table("obs/all_10_13")
+  sp <- c()
+  for (t in 1:nrow(w))
+  {
+    sp <- rbind(sp, c(
+      w[t, 1] %% P,         # folded JD - phase
+      w[t, 1],              # JD
+      model(w[t, 1] %% P),  # C data
+      w[t, 2]               # O data
+    ))
+  }
+  sp <- sp[order(sp[,1]),]
+  write.table(sp, "summary.dat", row.names=F, col.names=F)
+  plot(sp[,1], abs(sp[,3] - sp[,4]), pch=18,
+       cex=0.5,
+       type="l",
+       main="Residuals (non-smooth data, folded)",
+       ylab="apparent magnitude (m)",
+       xlab="period (days)",)
+  
+  
+  # save this plot to pdf
   dev.copy2pdf(
     file = paste0("plots/",filename,".pdf"),
-    width=16, height=8)
-  #dev.off()
+    width=16, height=16)
 }
 
 draw()
