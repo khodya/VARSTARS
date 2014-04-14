@@ -17,7 +17,7 @@ par <- 2.0
 sep <- 6.5
 
 # r -radius of the orbit
-r <- 3
+r <- 2
 
 # rad1 -radius of star A
 rad1 <- 1.1
@@ -32,7 +32,7 @@ lux1 <- 1
 lux2 <- 0.8
 
 # incl -inclination angle
-incl <- 70 * pi / 180
+incl <- 60 * pi / 180
 
 # initial phase
 phase <- 9.2 * pi / 180
@@ -166,7 +166,7 @@ model <- function(t)
 {
   s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
   
-  val <- -0.38 + apmag + 2.5*log10(s/v_circle_square(t, incl))
+  val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
   return(val)
 }
 
@@ -233,7 +233,7 @@ draw <- function()
   points(res[,1], res[,3], col=rgb(0,0,1), pch =18, cex=0.5)
   #text(0.35,7.5,col=rgb(0,0,0),"model")
   #text(0.35,7.7, col=rgb(0,0,1),"data")
-  legend("bottomleft", c("model", "data"), pch=c(18, 18),
+  legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
          col=c(rgb(0,0,0), rgb(0,0,1)) )
   text(1.1,6.70, "parameters", adj=0)
   text(1.1,6.75, paste("inclination", incl * 180 / pi), adj=0)
@@ -258,17 +258,20 @@ draw <- function()
       w[t, 1] %% P,         # folded JD - phase
       w[t, 1],              # JD
       model(w[t, 1] %% P),  # C data
-      w[t, 2]               # O data
+      w[t, 2],               # O data
+      t
     ))
   }
-  sp <- sp[order(sp[,1]),]
+  spByPhase <- sp[order(sp[,1]),]
   write.table(sp, "summary.dat", row.names=F, col.names=F)
-  plot(sp[,1], abs(sp[,3] - sp[,4]), pch=18,
+  plot(spByPhase[,1], spByPhase[,4] - spByPhase[,3], pch=18,
        cex=0.5,
        type="l",
        main="Residuals (non-smooth data, folded)",
        ylab="apparent magnitude (m)",
        xlab="period (days)",)
+  
+  plot(sp[24:84,2], sp[24:84,4] - sp[24:84,3], pch=18, type="l")
   
   
   # save this plot to pdf
