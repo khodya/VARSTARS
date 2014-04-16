@@ -17,7 +17,7 @@ par <- 2.0
 sep <- 6.5
 
 # r -radius of the orbit
-r <- 2
+r <- 3
 
 # rad1 -radius of star A
 rad1 <- 1.1
@@ -32,7 +32,7 @@ lux1 <- 1
 lux2 <- 0.8
 
 # incl -inclination angle
-incl <- 60 * pi / 180
+incl <- 69.2 * pi / 180
 
 # initial phase
 phase <- 9.2 * pi / 180
@@ -201,8 +201,10 @@ readRawData <- function()
   rawd <- read.table("obs/all_10_13")
   res <- c()
   for(t in 1:nrow(rawd))
-    res <- rbind(res, c(rawd[t,1] %% P, rawd[t,2]))
-  return(res[order(res[,1]),])
+    res <- rbind(res, c(rawd[t,1] %% P, rawd[t,1], rawd[t,2]))
+  write.table(res,"rawdata")
+  return(res)
+  #return(res[order(res[,1]),])
 }
 rawd <- readRawData()
 
@@ -210,7 +212,7 @@ draw <- function()
 {
   
   # open new device 
-  dev.new()
+ # dev.new()
   
   # prepare filename for pdf
   filename <- paste("plot",
@@ -222,7 +224,7 @@ draw <- function()
                    sep="_")
   
   # set plot parameters for 4 graphs on a page
-  par(mfrow=c(2,2))
+  par(mfrow=c(3,2))
   
   # plot Smooth vs Model
   plot(res[,1], res[,2], col=rgb(0,0,0), pch = 18, cex=0.5,
@@ -273,11 +275,23 @@ draw <- function()
   
   plot(sp[24:84,2], sp[24:84,4] - sp[24:84,3], pch=18, type="l")
   
+  # Spectrum of 2010 year (first 832 values)
+  N <- 831
+  vect <- sp[1:N-1,4]-sp[1:N-1,3]
+  dimi <- 1024-length(vect)
+  vect <- append(vect, rep(0, dimi))
+  
+  myspec <- fft(vect)
+  write.table(myspec,"spec2010.dat", row.names=F, col.names=F)
+  plot((Re(myspec)**2+Im(myspec)**2), pch=18, type="l")
+  
+  lim <- 30
+  plot((Re(myspec[1:lim])**2+Im(myspec[1:lim])**2), pch=18, type="l")
   
   # save this plot to pdf
   dev.copy2pdf(
     file = paste0("plots/",filename,".pdf"),
-    width=16, height=16)
+    width=16, height=24)
 }
 
 draw()
