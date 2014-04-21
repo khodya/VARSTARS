@@ -198,13 +198,21 @@ res <- readSmoothData()
 # and returns a data fold
 readRawData <- function()
 {
-  rawd <- read.table("obs/all_10_13")
-  res <- c()
-  for(t in 1:nrow(rawd))
-    res <- rbind(res, c(rawd[t,1] %% P, rawd[t,1], rawd[t,2]))
-  write.table(res,"rawdata")
-  return(res)
-  #return(res[order(res[,1]),])
+  w <- read.table("obs/all_10_13")
+  sp <- c()
+  for (t in 1:nrow(w))
+  {
+    sp <- rbind(sp, c(
+      t,                    # number
+      w[t, 1] %% P,         # folded JD - phase
+      w[t, 1],              # JD
+      model(w[t, 1] %% P),  # C data
+      w[t, 2]               # O data
+    ))
+  }
+  write.table(sp,"rawdata", row.names=F, col.names=F)
+  return(sp)
+  #return(sp[order(sp[,1]),])
 }
 rawd <- readRawData()
 
@@ -252,32 +260,43 @@ draw <- function()
        xlab="period (days)")
   
   # 
-  w <- read.table("obs/all_10_13")
-  sp <- c()
-  for (t in 1:nrow(w))
-  {
-    sp <- rbind(sp, c(
-      w[t, 1] %% P,         # folded JD - phase
-      w[t, 1],              # JD
-      model(w[t, 1] %% P),  # C data
-      w[t, 2],               # O data
-      t
-    ))
-  }
-  spByPhase <- sp[order(sp[,1]),]
-  write.table(sp, "summary.dat", row.names=F, col.names=F)
-  plot(spByPhase[,1], spByPhase[,4] - spByPhase[,3], pch=18,
+  #w <- read.table("obs/all_10_13")
+  #sp <- c()
+  #for (t in 1:nrow(w))
+  #{
+  #  sp <- rbind(sp, c(
+  #    t,
+  #    w[t, 1] %% P,         # folded JD - phase
+  #    w[t, 1],              # JD
+  #    model(w[t, 1] %% P),  # C data
+  #    w[t, 2],               # O data
+  #  ))
+  #}
+  
+  # plot O - C  (first 832 Nodes)
+  N <- 832 
+  # spByPhase <- rawd[order(rawd[,2]),]
+  plot(rawd[1:N,3], rawd[1:N,5] - rawd[1:N,4], pch=18,
        cex=0.5,
-       type="l",
-       main="Residuals (non-smooth data, folded)",
+#       type="l",
+       main="Residuals",
        ylab="apparent magnitude (m)",
        xlab="period (days)",)
   
-  plot(sp[24:84,2], sp[24:84,4] - sp[24:84,3], pch=18, type="l")
+  
+  # fit
+  vect <- rawd[1:N,5] - rawd[1:N,4]
+  t <- rawd[1:N,3]
+  lm.s <- lm(vect ~ sin(t) + cos(t))
+  #plot(lm.s)
+ # write.table(lm.s, "myfit")
+  
+  plot(rawd[24:84,3], rawd[24:84,5] - rawd[24:84,4], pch=18, type="l")
+  
   
   # Spectrum of 2010 year (first 832 values)
-  N <- 831
-  vect <- sp[1:N-1,4]-sp[1:N-1,3]
+  N <- 832
+  vect <- rawd[1:N-1,5]-rawd[1:N-1,4]
   dimi <- 1024-length(vect)
   vect <- append(vect, rep(0, dimi))
   
@@ -295,3 +314,40 @@ draw <- function()
 }
 
 draw()
+regression <- function()
+{
+  # Create time series
+  indexes <- 1:832
+  GM.dat <- rawd[indexes,5] - rawd[indexes,4]
+  GM.time <- rawd[indexes,3]
+  GM.ts <- ts(GM.dat, GM.time)
+  
+
+  sin.t <- sin(2*pi*GM.time)
+  cos.t <- cos(2*pi*GM.time)
+  lm.GM <- lm(GM.dat ~ sin.t + cos.t)
+  plot(lm.GM)
+  
+  #plot.ts(GM.ts)
+  #acf(GM.ts)
+}
+#regression()
+
+lombscargle <- function()
+{
+  # Create time series
+  indexes <- 1:832
+  GM.dat <- rawd[indexes,5] - rawd[indexes,4]
+  GM.time <- rawd[indexes,3]
+  GM.ts <- ts(GM.dat, GM.time)
+  
+  GM.lombscargle <- lsp(GM.dat,
+                        time = GM.time,
+                        type="frequency",
+                        #from=1/24,
+                       # to=1/2
+                        )
+  
+  return(GM.lombscargle)
+}
+#lslist <- lombscargle()
