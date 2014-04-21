@@ -275,13 +275,12 @@ draw <- function()
   
   # plot O - C  (first 832 Nodes)
   N <- 832 
-  # spByPhase <- rawd[order(rawd[,2]),]
   plot(rawd[1:N,3], rawd[1:N,5] - rawd[1:N,4], pch=18,
        cex=0.5,
 #       type="l",
-       main="Residuals",
+       main="Residuals (2010 raw data)",
        ylab="apparent magnitude (m)",
-       xlab="period (days)",)
+       xlab="JD from 2000",)
   
   
   # fit
@@ -291,26 +290,63 @@ draw <- function()
   #plot(lm.s)
  # write.table(lm.s, "myfit")
   
-  plot(rawd[24:84,3], rawd[24:84,5] - rawd[24:84,4], pch=18, type="l")
+  
+  # Plot scaled residuals
+#   indexes.scaled <- 1:100
+#   plot(rawd[indexes.scaled,3],
+#        rawd[indexes.scaled,5] - rawd[indexes.scaled,4],
+#        pch=18,
+#        #type="l",
+#        main="Residuals",
+#        ylab="apparent magnitude (m)",
+#        xlab="period (days)",
+#        )
+  
+  # Plot Lomb-Scargle periodogram
+  indexes <- 1:832
+  GM.dat <- rawd[indexes,5] - rawd[indexes,4]
+  GM.time <- rawd[indexes,3]
+  GM.ts <- ts(GM.dat, GM.time)
+  
+  GM.lsfreq <- lsp(GM.dat,
+                        time = GM.time,
+                        type="frequency",
+                        #from=0.1,
+                        #to=50,
+  )
+  text(20,200, paste("peaks at:",
+                     round(GM.lsfreq$peak.at[1],4),
+                     round(GM.lsfreq$peak.at[2],4)))
   
   
-  # Spectrum of 2010 year (first 832 values)
-  N <- 832
-  vect <- rawd[1:N-1,5]-rawd[1:N-1,4]
-  dimi <- 1024-length(vect)
-  vect <- append(vect, rep(0, dimi))
+  # Plot 2013 raw data
+  indexes <- 833:nrow(rawd)
+  GM2013.dat <- rawd[indexes,5] - rawd[indexes,4]
+  GM2013.time <- rawd[indexes,3]
+  GM2013.ts <- ts(GM.dat, GM.time)
   
-  myspec <- fft(vect)
-  write.table(myspec,"spec2010.dat", row.names=F, col.names=F)
-  plot((Re(myspec)**2+Im(myspec)**2), pch=18, type="l")
   
-  lim <- 30
-  plot((Re(myspec[1:lim])**2+Im(myspec[1:lim])**2), pch=18, type="l")
+  plot(GM2013.time, GM2013.dat, pch=18,
+       cex=0.5,
+       #       type="l",
+       main="Residuals (2013 raw data)",
+       ylab="apparent magnitude (m)",
+       xlab="JD from 2000",)
+  GM2013.lsfreq <- lsp(GM2013.dat,
+                   time = GM2013.time,
+                   type="frequency",
+                   #from=0.1,
+                   #to=50,
+  )
+  text(9,120, paste("peaks at:",
+                     round(GM2013.lsfreq$peak.at[1],4),
+                     round(GM2013.lsfreq$peak.at[2],4)))
+  
   
   # save this plot to pdf
   dev.copy2pdf(
     file = paste0("plots/",filename,".pdf"),
-    width=16, height=24)
+    width=24, height=24)
 }
 
 draw()
@@ -333,6 +369,7 @@ regression <- function()
 }
 #regression()
 
+require("lomb")
 lombscargle <- function()
 {
   # Create time series
@@ -344,8 +381,8 @@ lombscargle <- function()
   GM.lombscargle <- lsp(GM.dat,
                         time = GM.time,
                         type="frequency",
-                        #from=1/24,
-                       # to=1/2
+                        #from=0.1,
+                        #to=50,
                         )
   
   return(GM.lombscargle)
