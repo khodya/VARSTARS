@@ -1,5 +1,29 @@
 # This program models a light curve for a HD52721 (GU CMa) system
-# on circles and ellipses
+# with assumption of star's 
+
+# Orbit parameters
+# ORBIT.INCL inclination of the orbit (radians)
+# ORBIT.R radius of the component star (conventional units)
+# ORBIT.ECC orbit eccentricity
+# ORBIT.PHI0 initial angle of the component star at the orbit (radians)
+# ORBIT.P period (days)
+
+ORBIT.INCL <- 69.2 * pi / 180
+ORBIT.R <- 3
+ORBIT.ECC <- 1
+ORBIT.PHI0 <- 9.2 * pi / 180
+ORBIT.P <- 1.610155
+
+# Component parameters
+
+A.big.axis <- 1.1
+A.small.axis <- 1 * A.big.axis
+A.lux <- 1
+
+B.big.axis <- 1
+B.small.axis <- 0.9 * B.big.axis
+B.lux <- 0.8
+
 
 # model parameters:
 eps <- 1e-9
@@ -29,7 +53,7 @@ rad2 <- 1
 lux1 <- 1
 
 # lux2 -luminosity coef of star B
-lux2 <- 0.8
+lux2 <- 0.85
 
 # incl -inclination angle
 incl <- 69.2 * pi / 180
@@ -37,7 +61,7 @@ incl <- 69.2 * pi / 180
 # initial phase
 phase <- 9.2 * pi / 180
 
-## function: vdist
+## function: vdist1
 # This function will return a visible distance between stars
 # consider an inclination angle.
 
@@ -47,7 +71,9 @@ phase <- 9.2 * pi / 180
 
 vdist <- function(incl, pa)
 {
-	return(r * sqrt( cos(pa)**2 + cos(incl)**2 * sin(pa)**2 ) )
+  a <- r 
+  b <- 1 * a
+	return(sqrt( a**2 * cos(pa)**2 + b ** 2 * cos(incl)**2 * sin(pa)**2 ) )
 }
 
 ## function: v_circl_square
@@ -151,6 +177,121 @@ v_circle_square <- function(t, incl)
 		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
 	}
 	
+  return(0)
+}
+
+
+# Function: v_ellipse_square
+# Input:
+# t - position angle (radians)
+# inlc -inlination angle (radians)
+# Value: joint square value
+
+v_ellipse_square <- function(t, incl)
+{
+  
+  s <- A.lux * pi * A.big.axis * A.small.axis +
+      B.lux * pi * B.big.axis * B.small.axis
+  
+  # current positional angle of a star B
+  phi <- 2.0 * pi / ORBIT.P * t + ORBIT.PHI0
+  
+  # visible distance
+  vd <- vdist(incl, phi)
+  
+  
+  #upper edge
+  upper_edge <- A.big.axis + B.big.axis
+  
+  # find min of radii
+  min <- A.big.axis
+  max <- B.big.axis
+  is_rad1_max <- FALSE
+  
+  if ( B.big.axis < A.big.axis )
+  {
+    min <- B.big.axis
+    max <- A.big.axis
+    is_rad1_max <- TRUE
+  }		
+  
+  # define coef intensity
+  light_down <- 0
+  light_up <- 0
+  
+  if ( phi - pi <= eps )
+  {
+    light_down <- B.lux
+    light_up <- A.lux
+  }
+  else
+  {
+    light_down <- A.lux
+    light_up <- B.lux
+  }
+  
+  # stars are contiguous to each other
+  if ( abs( upper_edge - vd ) <= eps )
+  {	
+    return(s)
+  }
+  
+  # stars are far away from each other
+  if ( vd > upper_edge )
+  {
+    return(s)
+  }
+  
+  # full eclipse (case 5)
+  if ( is_rad1_max && vd + B.big.axis - A.big.axis)
+  {
+    if ( phi - pi <= eps )
+      return( light_up * pi * A.big.axis * A.small.axis )
+    return( light_up * pi * B.big.axis * B.small.axis +
+              light_down * pi * A.big.axis * A.small.axis -
+              light_down * pi * B.big.axis * B.small.axis)
+  } 
+  
+  # stars are overlapping (inludes subcases )
+  
+  # Calculate angle for circles first
+  arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
+  arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
+  
+  psi1 <- acos( arg1 )
+  psi2 <- acos( arg2 )
+  
+  zeta1 <- atan( A.small.axis / A.big.axis * tg(psi1))
+  zeta2 <- atan( B.small.axis / B.big.axis * tg(psi2))
+  
+  if ( is_rad1_max )
+  {
+    #segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
+    segm1 <- A.big.axis**2 * (2 * zeta1 - sin(2 * zeta1)) / 2
+    #segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
+    segm2 <- B.big.axis**2 * (2 * zeta2 -sin(2 * zeta2)) / 2
+    #semisquare <- pi * rad2**2 / 2 
+    semisquare <- pi * B.big.axis**2 / 2
+    #obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
+    obtuse_arc <- B.big.axis**2 * (2 * zeta2) / 2
+    #triangle <- rad2**2 * sin( -2 * psi2) / 2
+    triangle <- B.big.axis**2 * sin( -2 * zeta2 ) / 2
+    
+    #if ( psi2 - pi / 2 < eps )
+    if ( zeta2 - pi / 2 < eps)
+    {
+      return( s - light_down * (segm1 + segm2) )
+    }		   
+    
+    #if ( abs( psi2 - pi / 2 ) <= eps )
+    if (abs(zeta2 - pi /2) <= eps)
+    {
+      return( s - light_down * ( semisquare + segm1 ) )
+    }
+    
+    return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
+  }
+  
   return(0)
 }
 
@@ -280,7 +421,7 @@ draw <- function()
 #       type="l",
        main="Residuals (2010 raw data)",
        ylab="apparent magnitude (m)",
-       xlab="JD from 2000",)
+       xlab="JD - JD2000",)
   
   
   # fit
@@ -331,7 +472,7 @@ draw <- function()
        #       type="l",
        main="Residuals (2013 raw data)",
        ylab="apparent magnitude (m)",
-       xlab="JD from 2000",)
+       xlab="JD - JD2000",)
   GM2013.lsfreq <- lsp(GM2013.dat,
                    time = GM2013.time,
                    type="frequency",
