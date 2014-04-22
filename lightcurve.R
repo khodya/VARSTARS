@@ -196,6 +196,8 @@ v_ellipse_square <- function(t, incl)
   # current positional angle of a star B
   phi <- 2.0 * pi / ORBIT.P * t + ORBIT.PHI0
   
+  
+  
   # visible distance
   vd <- vdist(incl, phi)
   
@@ -255,8 +257,10 @@ v_ellipse_square <- function(t, incl)
   # stars are overlapping (inludes subcases )
   
   # Calculate angle for circles first
-  arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
-  arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
+  #arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
+  arg2 <- ( vd**2 + A.big.axis**2 - B.big.axis**2 ) / 2 / vd / A.big.axis
+  #arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
+  arg2 <- ( vd**2 + B.big.axis**2 - A.big.axis**2 ) / 2 / vd / B.big.axis
   
   psi1 <- acos( arg1 )
   psi2 <- acos( arg2 )
