@@ -190,37 +190,69 @@ v_circle_square <- function(t, incl)
 v_ellipse_square <- function(t, incl)
 {
   
-  s <- A.lux * pi * A.big.axis * A.small.axis +
-      B.lux * pi * B.big.axis * B.small.axis
+  
   
   # current positional angle of a star B
   phi <- 2.0 * pi / ORBIT.P * t + ORBIT.PHI0
   
+  # axises change its angle
+  if ( incl < pi / 2 )
+  {
+    # phi.plane - angle of star rotation in plane of orbit
+    # from cosines theorem for paralactic triangles
+    phi.plane <- acos( cos(phi) * cos( incl* sin(phi) ))
+    
+    # calculating axises of A component
+    A.a.true <- A.big.axis * cos(phi.plane)
+    A.b.true <- A.small.axis
+    
+    # calculating axises of B component
+    B.a.true <- B.big.axis * cos(phi.plane)
+    B.b.true <- B.small.axis
+    
+    # phi.new -  of angle of radius-vector with max coordinate
+    A.phi.new <- atan(A.b.true / A.a.true * tan(phi.plane))
+    B.phi.new <- atan(B.b.true / B.a.true * tan(phi.plane))
+    
+    # calculating visible axises
+    A.a <- sqrt( (A.a.true*cos(A.phi.new))^2 + (A.b.true*sin(A.phi.new))^2  )
+    A.b <- A.b.true
+    
+    B.a <- sqrt( (B.a.true*cos(B.phi.new))^2 + (B.b.true*sin(B.phi.new))^2  )
+    B.b <- B.b.true
+    
+    
+    
+    
+  }
   
+  s <- A.lux * pi * A.a * A.b +
+    B.lux * pi * B.a * B.b
   
   # visible distance
   vd <- vdist(incl, phi)
   
   
   #upper edge
-  upper_edge <- A.big.axis + B.big.axis
+  #upper_edge <- A.big.axis + B.big.axis
+  upper_edge <- A.a + B.a
   
   # find min of radii
-  min <- A.big.axis
-  max <- B.big.axis
+  #min <- A.big.axis
+  min <- A.a
+  #max <- B.big.axis
+  max <- B.a
   is_rad1_max <- FALSE
   
-  if ( B.big.axis < A.big.axis )
+  if ( B.a < A.a)
   {
-    min <- B.big.axis
-    max <- A.big.axis
+    min <- B.a
+    max <- A.a
     is_rad1_max <- TRUE
   }		
   
   # define coef intensity
-  light_down <- 0
-  light_up <- 0
-  
+ 
   if ( phi - pi <= eps )
   {
     light_down <- B.lux
@@ -245,41 +277,41 @@ v_ellipse_square <- function(t, incl)
   }
   
   # full eclipse (case 5)
-  if ( is_rad1_max && vd + B.big.axis - A.big.axis)
+  if ( is_rad1_max && vd + B.a - A.a <= eps)
   {
     if ( phi - pi <= eps )
-      return( light_up * pi * A.big.axis * A.small.axis )
-    return( light_up * pi * B.big.axis * B.small.axis +
-              light_down * pi * A.big.axis * A.small.axis -
-              light_down * pi * B.big.axis * B.small.axis)
+      return( light_up * pi * A.a * A.b )
+    return( light_up * pi * B.a * B.b +
+              light_down * pi * A.a * A.b -
+              light_down * pi * B.a * B.b)
   } 
   
   # stars are overlapping (inludes subcases )
   
   # Calculate angle for circles first
   #arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
-  arg2 <- ( vd**2 + A.big.axis**2 - B.big.axis**2 ) / 2 / vd / A.big.axis
+  arg1 <- ( vd**2 + A.a**2 - B.a**2 ) / 2 / vd / A.a
   #arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
-  arg2 <- ( vd**2 + B.big.axis**2 - A.big.axis**2 ) / 2 / vd / B.big.axis
+  arg2 <- ( vd**2 + B.a**2 - A.a**2 ) / 2 / vd / B.a
   
   psi1 <- acos( arg1 )
   psi2 <- acos( arg2 )
   
-  zeta1 <- atan( A.small.axis / A.big.axis * tg(psi1))
-  zeta2 <- atan( B.small.axis / B.big.axis * tg(psi2))
+  zeta1 <- atan( A.b / A.a * tan(psi1))
+  zeta2 <- atan( B.b / B.a * tan(psi2))
   
   if ( is_rad1_max )
   {
     #segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
-    segm1 <- A.big.axis**2 * (2 * zeta1 - sin(2 * zeta1)) / 2
+    segm1 <- A.a**2 * (2 * zeta1 - sin(2 * zeta1)) / 2
     #segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
-    segm2 <- B.big.axis**2 * (2 * zeta2 -sin(2 * zeta2)) / 2
+    segm2 <- B.a**2 * (2 * zeta2 -sin(2 * zeta2)) / 2
     #semisquare <- pi * rad2**2 / 2 
-    semisquare <- pi * B.big.axis**2 / 2
+    semisquare <- pi * B.a**2 / 2
     #obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
-    obtuse_arc <- B.big.axis**2 * (2 * zeta2) / 2
+    obtuse_arc <- B.a**2 * (2 * zeta2) / 2
     #triangle <- rad2**2 * sin( -2 * psi2) / 2
-    triangle <- B.big.axis**2 * sin( -2 * zeta2 ) / 2
+    triangle <- B.a**2 * sin( -2 * zeta2 ) / 2
     
     #if ( psi2 - pi / 2 < eps )
     if ( zeta2 - pi / 2 < eps)
@@ -311,7 +343,8 @@ model <- function(t)
 {
   s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
   
-  val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
+  #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
+  val <- -0.37 + apmag + 2.5*log10(s/v_ellipse_square(t, incl))
   return(val)
 }
 
