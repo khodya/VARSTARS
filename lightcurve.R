@@ -24,6 +24,8 @@ B.big.axis <- 1
 B.small.axis <- 0.9 * B.big.axis
 B.lux <- 0.8
 
+# Common parameters
+ZERO.POINT <- -0.464
 
 # model parameters:
 eps <- 1e-9
@@ -203,11 +205,11 @@ v_ellipse_square <- function(t, incl)
     phi.plane <- acos( cos(phi) * cos( incl* sin(phi) ))
     
     # calculating axises of A component
-    A.a.true <- A.big.axis * cos(phi.plane)
+    A.a.true <- A.big.axis #* cos(phi.plane)
     A.b.true <- A.small.axis
     
     # calculating axises of B component
-    B.a.true <- B.big.axis * cos(phi.plane)
+    B.a.true <- B.big.axis #* cos(phi.plane)
     B.b.true <- B.small.axis
     
     # phi.new -  of angle of radius-vector with max coordinate
@@ -344,7 +346,7 @@ model <- function(t)
   s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
   
   #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
-  val <- -0.37 + apmag + 2.5*log10(s/v_ellipse_square(t, incl))
+  val <- ZERO.POINT +  apmag + 2.5*log10(s/v_ellipse_square(t, incl))
   return(val)
 }
 
@@ -492,7 +494,7 @@ draw <- function()
                         #from=0.1,
                         #to=50,
   )
-  text(20,200, paste("peaks at:",
+  text(20,120, paste("peaks at:",
                      round(GM.lsfreq$peak.at[1],4),
                      round(GM.lsfreq$peak.at[2],4)))
   
