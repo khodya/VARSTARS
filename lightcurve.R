@@ -8,24 +8,26 @@
 # ORBIT.PHI0 initial angle of the component star at the orbit (radians)
 # ORBIT.P period (days)
 
-ORBIT.INCL <- 69.2 * pi / 180
+require("lomb")
+
+ORBIT.INCL <- 68 * pi / 180
 ORBIT.R <- 3
-ORBIT.ECC <- 1
+ORBIT.ECC <- 1 
 ORBIT.PHI0 <- 9.2 * pi / 180
 ORBIT.P <- 1.610155
 
 # Component parameters
 
-A.big.axis <- 1.1
+A.big.axis <- 1
 A.small.axis <- 1 * A.big.axis
 A.lux <- 1
 
-B.big.axis <- 1
-B.small.axis <- 0.9 * B.big.axis
-B.lux <- 0.8
+B.big.axis <- 0.9
+B.small.axis <- 0.4 * B.big.axis
+B.lux <- 0.9
 
 # Common parameters
-ZERO.POINT <- -0.464
+ZERO.POINT <- -0.395
 
 # model parameters:
 eps <- 1e-9
@@ -46,7 +48,7 @@ sep <- 6.5
 r <- 3
 
 # rad1 -radius of star A
-rad1 <- 1.1
+rad1 <- 1.2
 
 # rad2 -radius of star B
 rad2 <- 1
@@ -73,7 +75,7 @@ phase <- 9.2 * pi / 180
 
 vdist <- function(incl, pa)
 {
-  a <- r 
+  a <- ORBIT.R
   b <- 1 * a
 	return(sqrt( a**2 * cos(pa)**2 + b ** 2 * cos(incl)**2 * sin(pa)**2 ) )
 }
@@ -232,7 +234,7 @@ v_ellipse_square <- function(t, incl)
     B.lux * pi * B.a * B.b
   
   # visible distance
-  vd <- vdist(incl, phi)
+  vd <- vdist(ORBIT.INCL, phi)
   
   
   #upper edge
@@ -343,10 +345,11 @@ v_ellipse_square <- function(t, incl)
 # modelled square at the "t" moment
 model <- function(t)
 {
-  s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
-  
+  #s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
+  s <- A.lux * pi * A.big.axis * A.small.axis +
+      B.lux * pi * B.big.axis * B.small.axis
   #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
-  val <- ZERO.POINT +  apmag + 2.5*log10(s/v_ellipse_square(t, incl))
+  val <- ZERO.POINT +  apmag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
   return(val)
 }
 
@@ -426,12 +429,12 @@ draw <- function()
   legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
          col=c(rgb(0,0,0), rgb(0,0,1)) )
   text(1.1,6.70, "parameters", adj=0)
-  text(1.1,6.75, paste("inclination", incl * 180 / pi), adj=0)
-  text(1.1,6.80, paste("radii", rad1, ";", rad2), adj=0)
-  text(1.1,6.85, paste("separation", r), adj=0)
-  text(1.1,6.90, paste("lux factors", lux1, ";", lux2), adj=0)
-  text(1.1,6.95, paste("period", P), adj=0)
-  text(1.1,7.0, paste("initial phase", phase * 180 / pi), adj=0)
+  text(1.1,6.75, paste("inclination", ORBIT.INCL * 180 / pi), adj=0)
+  text(1.1,6.80, paste("radii", A.big.axis, ";", B.big.axis), adj=0)
+  text(1.1,6.85, paste("separation", ORBIT.R), adj=0)
+  text(1.1,6.90, paste("lux factors", A.lux, ";", B.lux), adj=0)
+  text(1.1,6.95, paste("period", ORBIT.P), adj=0)
+  text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
   
   # plot Residuals Smooth vs Model
   plot(res[,1],abs(res[,2]-res[,3]), pch=".", type="l",
@@ -549,7 +552,7 @@ regression <- function()
 }
 #regression()
 
-require("lomb")
+
 lombscargle <- function()
 {
   # Create time series
