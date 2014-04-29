@@ -10,20 +10,21 @@
 
 require("lomb")
 
-ORBIT.INCL <- 68 * pi / 180
+ORBIT.INCL <- 67 * pi / 180
 ORBIT.R <- 3
 ORBIT.ECC <- 1 
-ORBIT.PHI0 <- 9.2 * pi / 180
-ORBIT.P <- 1.610155
+ORBIT.PHI0 <- 9.5 * pi / 180
+#ORBIT.PHI0 <- 0.83
+ORBIT.P <- 1.610157
 
 # Component parameters
 
-A.big.axis <- 1
+A.big.axis <- 1.08
 A.small.axis <- 1 * A.big.axis
 A.lux <- 1
 
-B.big.axis <- 0.9
-B.small.axis <- 0.4 * B.big.axis
+B.big.axis <- 1.03
+B.small.axis <- 0.9 * B.big.axis
 B.lux <- 0.9
 
 # Common parameters
@@ -204,7 +205,7 @@ v_ellipse_square <- function(t, incl)
   {
     # phi.plane - angle of star rotation in plane of orbit
     # from cosines theorem for paralactic triangles
-    phi.plane <- acos( cos(phi) * cos( incl* sin(phi) ))
+    phi.plane <- acos( cos(phi) * cos( ( (pi/2 - incl)* sin(phi) )))
     
     # calculating axises of A component
     A.a.true <- A.big.axis #* cos(phi.plane)
@@ -422,19 +423,19 @@ draw <- function()
        main="GU CMa light curve",
        ylab="apparent magnitude (m)",
        xlab="period (days)",
-       ylim=c(7,6))
+       ylim=c(6.55,6.1))
   points(res[,1], res[,3], col=rgb(0,0,1), pch =18, cex=0.5)
   #text(0.35,7.5,col=rgb(0,0,0),"model")
   #text(0.35,7.7, col=rgb(0,0,1),"data")
-  legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
-         col=c(rgb(0,0,0), rgb(0,0,1)) )
-  text(1.1,6.70, "parameters", adj=0)
-  text(1.1,6.75, paste("inclination", ORBIT.INCL * 180 / pi), adj=0)
-  text(1.1,6.80, paste("radii", A.big.axis, ";", B.big.axis), adj=0)
-  text(1.1,6.85, paste("separation", ORBIT.R), adj=0)
-  text(1.1,6.90, paste("lux factors", A.lux, ";", B.lux), adj=0)
-  text(1.1,6.95, paste("period", ORBIT.P), adj=0)
-  text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
+  #legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
+  #       col=c(rgb(0,0,0), rgb(0,0,1)) )
+  #text(1.1,6.70, "parameters", adj=0)
+  #text(1.1,6.75, paste("inclination", ORBIT.INCL * 180 / pi), adj=0)
+  #text(1.1,6.80, paste("radii", A.big.axis, ";", B.big.axis), adj=0)
+  #text(1.1,6.85, paste("separation", ORBIT.R), adj=0)
+  #text(1.1,6.90, paste("lux factors", A.lux, ";", B.lux), adj=0)
+  #text(1.1,6.95, paste("period", ORBIT.P), adj=0)
+  #text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
   
   # plot Residuals Smooth vs Model
   plot(res[,1],abs(res[,2]-res[,3]), pch=".", type="l",
