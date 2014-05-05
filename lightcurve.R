@@ -20,7 +20,6 @@ ORBIT.T0 <- 0.83
 ORBIT.P <- 1.610157
 
 # Component parameters
-
 A.big.axis <- 1.03
 A.small.axis <- 1* A.big.axis
 A.lux <- 1.2
@@ -30,10 +29,12 @@ B.small.axis <- 0.8 * B.big.axis
 B.lux <- 1.1
 
 # Common parameters
+app.mag <- 6.6
 ZERO.POINT <- -0.395
 
 # model parameters:
 eps <- 1e-9
+
 
 # P -orbital period (days)
 #P <- 1.610155
@@ -352,7 +353,7 @@ model <- function(t)
   s <- A.lux * pi * A.big.axis * A.small.axis +
       B.lux * pi * B.big.axis * B.small.axis
   #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
-  val <- ZERO.POINT +  apmag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
+  val <- ZERO.POINT +  app.mag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
   return(val)
 }
 
@@ -365,9 +366,7 @@ model <- function(t)
 readSmoothData <- function()
 {
   obs <-  read.table("obs/pmm_all_1610155_15")
-  
-  s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
-  
+ 
   res <- c()
   for (q in 1:nrow(obs))
     res <- rbind(res, c(obs[q,1], model(obs[q,1]),#-0.38 +
@@ -389,11 +388,11 @@ readRawData <- function()
   for (t in 1:nrow(w))
   {
     sp <- rbind(sp, c(
-      t,                    # number
-      w[t, 1] %% P,         # folded JD - phase
-      w[t, 1],              # JD
-      model(w[t, 1] %% P),  # C data
-      w[t, 2]               # O data
+      t,                          # number
+      w[t, 1] %% ORBIT.P,         # folded JD - phase
+      w[t, 1],                    # JD
+      model(w[t, 1] %% ORBIT.P),  # C data
+      w[t, 2]                     # O data
     ))
   }
   write.table(sp,"rawdata", row.names=F, col.names=F)
