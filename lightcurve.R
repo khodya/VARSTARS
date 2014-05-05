@@ -6,26 +6,28 @@
 # ORBIT.R radius of the component star (conventional units)
 # ORBIT.ECC orbit eccentricity
 # ORBIT.PHI0 initial angle of the component star at the orbit (radians)
+# ORBIT.T0 initial phase of period 
 # ORBIT.P period (days)
 
 require("lomb")
 
 ORBIT.INCL <- 67 * pi / 180
 ORBIT.R <- 3
-ORBIT.ECC <- 1 
-ORBIT.PHI0 <- 9.5 * pi / 180
-#ORBIT.PHI0 <- 0.83
+ORBIT.ECC <- 0.000001
+#ORBIT.ECC <- 0.5
+ORBIT.PHI0 <- 9.2 * pi / 180
+ORBIT.T0 <- 0.83
 ORBIT.P <- 1.610157
 
 # Component parameters
 
-A.big.axis <- 1.08
-A.small.axis <- 1 * A.big.axis
-A.lux <- 1
+A.big.axis <- 1.03
+A.small.axis <- 1* A.big.axis
+A.lux <- 1.2
 
-B.big.axis <- 1.03
-B.small.axis <- 0.9 * B.big.axis
-B.lux <- 0.9
+B.big.axis <- 0.97
+B.small.axis <- 0.8 * B.big.axis
+B.lux <- 1.1
 
 # Common parameters
 ZERO.POINT <- -0.395
@@ -34,37 +36,37 @@ ZERO.POINT <- -0.395
 eps <- 1e-9
 
 # P -orbital period (days)
-P <- 1.610155
+#P <- 1.610155
 
 # apmag -apparent magnitude integral (m)
-apmag <- 6.6
+#apmag <- 6.6
 
 # par -parralax (mas)
-par <- 2.0
+#par <- 2.0
 
 # sep -angular separation of components (10 * mas)
-sep <- 6.5
+#sep <- 6.5
 
 # r -radius of the orbit
-r <- 3
+#r <- 3
 
 # rad1 -radius of star A
-rad1 <- 1.2
+#rad1 <- 1.2
 
 # rad2 -radius of star B
-rad2 <- 1
+#rad2 <- 1
 
 # lux1 -luminosity coef of star A
-lux1 <- 1
+#lux1 <- 1
 
 # lux2 -luminosity coef of star B
-lux2 <- 0.85
+#lux2 <- 0.85
 
 # incl -inclination angle
-incl <- 69.2 * pi / 180
+#incl <- 69.2 * pi / 180
 
 # initial phase
-phase <- 9.2 * pi / 180
+#phase <- 9.2 * pi / 180
 
 ## function: vdist1
 # This function will return a visible distance between stars
@@ -77,7 +79,7 @@ phase <- 9.2 * pi / 180
 vdist <- function(incl, pa)
 {
   a <- ORBIT.R
-  b <- 1 * a
+  b <- sqrt(a^2*(1-ORBIT.ECC^2))
 	return(sqrt( a**2 * cos(pa)**2 + b ** 2 * cos(incl)**2 * sin(pa)**2 ) )
 }
 
@@ -188,7 +190,7 @@ v_circle_square <- function(t, incl)
 
 # Function: v_ellipse_square
 # Input:
-# t - position angle (radians)
+# -time (phase of a period T)
 # inlc -inlination angle (radians)
 # Value: joint square value
 
@@ -198,7 +200,7 @@ v_ellipse_square <- function(t, incl)
   
   
   # current positional angle of a star B
-  phi <- 2.0 * pi / ORBIT.P * t + ORBIT.PHI0
+  phi <- 2.0 * pi / ORBIT.P * t   + ORBIT.PHI0
   
   # axises change its angle
   if ( incl < pi / 2 )
@@ -408,11 +410,12 @@ draw <- function()
   
   # prepare filename for pdf
   filename <- paste("plot",
-                   "incl", incl * 180 / pi,
-                   "radii",rad1,rad2,
-                   "sep",r,
-                   "lux",lux1,lux2,
-                   "P",P,
+                   "incl", ORBIT.INCL * 180 / pi,
+                   "major",A.big.axis, B.big.axis,
+                   "ellipticity", round(A.small.axis / A.big.axis, 4),
+                                  round(B.small.axis / B.big.axis, 4), 
+                   "lux",A.lux,B.lux,
+                   "phase",round(ORBIT.PHI0, 4),
                    sep="_")
   
   # set plot parameters for 4 graphs on a page
@@ -423,7 +426,7 @@ draw <- function()
        main="GU CMa light curve",
        ylab="apparent magnitude (m)",
        xlab="period (days)",
-       ylim=c(6.55,6.1))
+       ylim=c(6.55,6.15))
   points(res[,1], res[,3], col=rgb(0,0,1), pch =18, cex=0.5)
   #text(0.35,7.5,col=rgb(0,0,0),"model")
   #text(0.35,7.7, col=rgb(0,0,1),"data")
