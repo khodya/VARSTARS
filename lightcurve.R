@@ -1,5 +1,5 @@
 # This program models a light curve for a HD52721 (GU CMa) system
-# with assumption of star's 
+# with assumption of star's ellipticity
 
 # Orbit parameters
 # ORBIT.INCL inclination of the orbit (radians)
@@ -28,9 +28,13 @@ B.big.axis <- 0.97
 B.small.axis <- 0.8 * B.big.axis
 B.lux <- 1.1
 
-# Common parameters
+# Photometric parameters
 app.mag <- 6.6
+
+# Common parameters
 ZERO.POINT <- -0.395
+indexes.2010 <- 1:832
+
 
 # model parameters:
 eps <- 1e-9
@@ -530,6 +534,11 @@ draw <- function()
   dev.copy2pdf(
     file = paste0("plots/",filename,".pdf"),
     width=24, height=24)
+  
+  # save to eps
+  dev.copy2eps(
+    file=paste0("plots/",filename,".eps"),
+    width=24, height=24)
 }
 
 draw()
@@ -571,3 +580,41 @@ draw()
 #   return(GM.lombscargle)
 # }
 #lslist <- lombscargle()
+
+
+# Function: lcmodel(phases)
+#
+# This function returns a light curve model vector 
+# for a given argument vector
+# Input: phase of period vector
+# Result: light curve vector according to the model
+lcmodel <- function(phases, plot=FALSE)
+{ 
+  v <- c()
+  for (q in phases) 
+    v <- rbind(v, model(q))
+  
+  if (plot)
+  {
+    par(mfrow=c(1,1))
+    plot(phases, v,
+         main="Model",
+         xlab="phases of a period",
+         ylab="app. mag. (m)",
+         ylim=c(max(v)+0.15,min(v)-0.15))
+    return(invisible(v))
+  }
+  return(v)
+}
+starmodel <- lcmodel(res[,1], plot=T)
+
+
+# # Function: minimize
+# # This function will fit model to raw data and will find residuals
+# minimize <- function()
+# {
+#   
+# }
+
+# Function: rsdls
+
