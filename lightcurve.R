@@ -90,103 +90,103 @@ vdist <- function(incl, pa)
 # t -time (phase of a period T)
 # incl -inclination angle
 
-v_circle_square <- function(t, incl)
-{
-	# square terms
-	s <- 0
-	
-	s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
-
-	# current positional angle of a star B
-	phi <- 2 * pi / P * t + phase
-
-	# visible distance
-	vd <- vdist(incl, phi)
-  #print("vd: ", vd)
-  
-	#upper edge
-	upper_edge <- rad1 + rad2
-
-	# find min of radii
-	min <- rad1
-	max <- rad2
-	is_rad1_max <- FALSE
-
-	if ( rad2 < rad1 )
-	{
-		min <- rad2
-		max <- rad1 
-		is_rad1_max <- TRUE
-	}		
-
-	# define coef intensity
-	light_down <- 0
-	light_up <- 0
-
-	if ( phi - pi <= eps )
-	{
-		light_down <- lux2
-		light_up <- lux1
-	}
-	else
-	{
-		light_down <- lux1
-		light_up <- lux2
-	}
-
-	# stars are contiguous to each other
-	if ( abs( upper_edge - vd ) <= eps )
-	{	
-		return(s)
-	}
-
-	# stars are far away from each other
-	if ( vd > upper_edge )
-	{
-		return(s)
-	}
-		
-	# full eclipse (case 5)
-	if ( is_rad1_max && vd + rad2 - rad1 <= eps )
-	{
-		if ( phi - pi <= eps )
-		   return( light_up * pi * rad1**2 )
-		return( light_up * pi * rad2**2 +
-              light_down * pi * rad1**2 -
-              light_down * pi * rad2**2)
-	} 
-
-	# stars are overlapping (inludes subcases )
-	
-	arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
-	arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
-
-	psi1 <- acos( arg1 )
-	psi2 <- acos( arg2 )
-
-	if ( is_rad1_max )
-	{
-		segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
-		segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
-		semisquare <- pi * rad2**2 / 2 
-		obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
-		triangle <- rad2**2 * sin( -2 * psi2) / 2
-		
-		if ( psi2 - pi / 2 < eps )
-		{
-		   return( s - light_down * (segm1 + segm2) )
-		}		   
-
-		if ( abs( psi2 - pi / 2 ) <= eps )
-		{
-		   return( s - light_down * ( semisquare + segm1 ) )
-		}
-
-		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
-	}
-	
-  return(0)
-}
+# v_circle_square <- function(t, incl)
+# {
+# 	# square terms
+# 	s <- 0
+# 	
+# 	s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
+# 
+# 	# current positional angle of a star B
+# 	phi <- 2 * pi / P * t + phase
+# 
+# 	# visible distance
+# 	vd <- vdist(incl, phi)
+#   #print("vd: ", vd)
+#   
+# 	#upper edge
+# 	upper_edge <- rad1 + rad2
+# 
+# 	# find min of radii
+# 	min <- rad1
+# 	max <- rad2
+# 	is_rad1_max <- FALSE
+# 
+# 	if ( rad2 < rad1 )
+# 	{
+# 		min <- rad2
+# 		max <- rad1 
+# 		is_rad1_max <- TRUE
+# 	}		
+# 
+# 	# define coef intensity
+# 	light_down <- 0
+# 	light_up <- 0
+# 
+# 	if ( phi - pi <= eps )
+# 	{
+# 		light_down <- lux2
+# 		light_up <- lux1
+# 	}
+# 	else
+# 	{
+# 		light_down <- lux1
+# 		light_up <- lux2
+# 	}
+# 
+# 	# stars are contiguous to each other
+# 	if ( abs( upper_edge - vd ) <= eps )
+# 	{	
+# 		return(s)
+# 	}
+# 
+# 	# stars are far away from each other
+# 	if ( vd > upper_edge )
+# 	{
+# 		return(s)
+# 	}
+# 		
+# 	# full eclipse (case 5)
+# 	if ( is_rad1_max && vd + rad2 - rad1 <= eps )
+# 	{
+# 		if ( phi - pi <= eps )
+# 		   return( light_up * pi * rad1**2 )
+# 		return( light_up * pi * rad2**2 +
+#               light_down * pi * rad1**2 -
+#               light_down * pi * rad2**2)
+# 	} 
+# 
+# 	# stars are overlapping (inludes subcases )
+# 	
+# 	arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
+# 	arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
+# 
+# 	psi1 <- acos( arg1 )
+# 	psi2 <- acos( arg2 )
+# 
+# 	if ( is_rad1_max )
+# 	{
+# 		segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
+# 		segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
+# 		semisquare <- pi * rad2**2 / 2 
+# 		obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
+# 		triangle <- rad2**2 * sin( -2 * psi2) / 2
+# 		
+# 		if ( psi2 - pi / 2 < eps )
+# 		{
+# 		   return( s - light_down * (segm1 + segm2) )
+# 		}		   
+# 
+# 		if ( abs( psi2 - pi / 2 ) <= eps )
+# 		{
+# 		   return( s - light_down * ( semisquare + segm1 ) )
+# 		}
+# 
+# 		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
+# 	}
+# 	
+#   return(0)
+# }
 
 
 # Function: v_ellipse_square
@@ -197,9 +197,6 @@ v_circle_square <- function(t, incl)
 
 v_ellipse_square <- function(t, incl)
 {
-  
-  
-  
   # current positional angle of a star B
   phi <- 2.0 * pi / ORBIT.P * t   + ORBIT.PHI0
   
@@ -470,9 +467,9 @@ draw <- function()
   
   
   # fit
-  vect <- rawd[1:N,5] - rawd[1:N,4]
-  t <- rawd[1:N,3]
-  lm.s <- lm(vect ~ sin(t) + cos(t))
+#   vect <- rawd[1:N,5] - rawd[1:N,4]
+#   t <- rawd[1:N,3]
+#   lm.s <- lm(vect ~ sin(t) + cos(t))
   #plot(lm.s)
  # write.table(lm.s, "myfit")
   
@@ -488,7 +485,7 @@ draw <- function()
 #        xlab="period (days)",
 #        )
   
-  # Plot Lomb-Scargle periodogram
+  # Plot Lomb-Scargle periodogram 2010 data
   indexes <- 1:832
   GM.dat <- rawd[indexes,5] - rawd[indexes,4]
   GM.time <- rawd[indexes,3]
@@ -536,41 +533,41 @@ draw <- function()
 }
 
 draw()
-regression <- function()
-{
-  # Create time series
-  indexes <- 1:832
-  GM.dat <- rawd[indexes,5] - rawd[indexes,4]
-  GM.time <- rawd[indexes,3]
-  GM.ts <- ts(GM.dat, GM.time)
-  
-
-  sin.t <- sin(2*pi*GM.time)
-  cos.t <- cos(2*pi*GM.time)
-  lm.GM <- lm(GM.dat ~ sin.t + cos.t)
-  plot(lm.GM)
-  
-  #plot.ts(GM.ts)
-  #acf(GM.ts)
-}
+# regression <- function()
+# {
+#   # Create time series
+#   indexes <- 1:832
+#   GM.dat <- rawd[indexes,5] - rawd[indexes,4]
+#   GM.time <- rawd[indexes,3]
+#   GM.ts <- ts(GM.dat, GM.time)
+#   
+# 
+#   sin.t <- sin(2*pi*GM.time)
+#   cos.t <- cos(2*pi*GM.time)
+#   lm.GM <- lm(GM.dat ~ sin.t + cos.t)
+#   plot(lm.GM)
+#   
+#   #plot.ts(GM.ts)
+#   #acf(GM.ts)
+# }
 #regression()
 
 
-lombscargle <- function()
-{
-  # Create time series
-  indexes <- 1:832
-  GM.dat <- rawd[indexes,5] - rawd[indexes,4]
-  GM.time <- rawd[indexes,3]
-  GM.ts <- ts(GM.dat, GM.time)
-  
-  GM.lombscargle <- lsp(GM.dat,
-                        time = GM.time,
-                        type="frequency",
-                        #from=0.1,
-                        #to=50,
-                        )
-  
-  return(GM.lombscargle)
-}
+# lombscargle <- function()
+# {
+#   # Create time series
+#   indexes <- 1:832
+#   GM.dat <- rawd[indexes,5] - rawd[indexes,4]
+#   GM.time <- rawd[indexes,3]
+#   GM.ts <- ts(GM.dat, GM.time)
+#   
+#   GM.lombscargle <- lsp(GM.dat,
+#                         time = GM.time,
+#                         type="frequency",
+#                         #from=0.1,
+#                         #to=50,
+#                         )
+#   
+#   return(GM.lombscargle)
+# }
 #lslist <- lombscargle()
