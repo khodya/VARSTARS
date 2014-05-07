@@ -355,6 +355,7 @@ model <- function(t)
       B.lux * pi * B.big.axis * B.small.axis
   #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
   val <- ZERO.POINT +  app.mag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
+  #val <- 12.95198 +  app.mag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
   return(val)
 }
 
@@ -606,15 +607,15 @@ lcmodel <- function(phases, plot=FALSE)
   }
   return(v)
 }
-starmodel <- lcmodel(res[,1], plot=T)
+#starmodel <- lcmodel(res[,1], plot=T)
 
 
 # # Function: minimize
 # # This function will fit model to raw data and will find residuals
-# minimize <- function()
-# {
-#   
-# }
+lcresid<- function(z)
+{
+  return(sum((res[,3]-z+lcmodel(res[,1]))^2)/nrow(res)^2)
+}
 
 # Function: rsdls
 
