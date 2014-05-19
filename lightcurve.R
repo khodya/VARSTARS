@@ -484,7 +484,7 @@ period.fold <- function(indexes, p, save=F)
   {
     res <- rbind(res,c(
       rawd[t,3],              #JD
-      rawd[t,3] %% ORBIT.P %% p,         # folded JD
+      rawd[t,3] %% p,         # folded JD
       rawd[t,5]-rawd[t,4]     # O-C
       ))
   }
