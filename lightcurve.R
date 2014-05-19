@@ -25,20 +25,25 @@ A.small.axis <- 1* A.big.axis
 A.lux <- 1.2
 
 B.big.axis <- 0.97
-B.small.axis <- 0.8 * B.big.axis
+B.small.axis <- 0.93 * B.big.axis
 B.lux <- 1.1
 
 # Photometric parameters
 app.mag <- 6.6
 
 # Common parameters
-ZERO.POINT <- -0.395
+ZERO.POINT <- -0.375
 indexes.2010 <- 1:832
-
 
 # model parameters:
 eps <- 1e-9
 
+## RAW DATA INDEXES
+i.2010 <- 1:832
+i.2013 <- 833:2465
+
+i.85.200 <- 85:200
+i.24.305 <- 24:305
 
 # P -orbital period (days)
 #P <- 1.610155
@@ -195,7 +200,7 @@ vdist <- function(incl, pa)
 
 # Function: v_ellipse_square
 # Input:
-# -time (phase of a period T)
+# t -time (phase of a period T)
 # inlc -inlination angle (radians)
 # Value: joint square value
 
@@ -229,17 +234,13 @@ v_ellipse_square <- function(t, incl)
     
     B.a <- sqrt( (B.a.true*cos(B.phi.new))^2 + (B.b.true*sin(B.phi.new))^2  )
     B.b <- B.b.true
-    
-    
-    
-    
   }
   
   s <- A.lux * pi * A.a * A.b +
     B.lux * pi * B.a * B.b
   
   # visible distance
-  vd <- vdist(ORBIT.INCL, phi)
+  vd <- vdist(ORBIT.INCL, phi.plane)
   
   
   #upper edge
@@ -340,7 +341,7 @@ v_ellipse_square <- function(t, incl)
   return(0)
 }
 
-# Funcion: model()
+# Funcion: ellmodel()
 # This function calls a square model
 #
 # Input parameters:
@@ -348,7 +349,7 @@ v_ellipse_square <- function(t, incl)
 #
 # Returns:
 # modelled square at the "t" moment
-model <- function(t)
+ellmodel <- function(t)
 {
   #s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
   s <- A.lux * pi * A.big.axis * A.small.axis +
@@ -359,27 +360,41 @@ model <- function(t)
   return(val)
 }
 
+# SMOOTHED DATA
+# column 1: time
+# column 2: model data
+# column 3: smooth data
+smoothd <- c()
+
 # Function: readSmoothData()
-#
 # This function reads smoothed data.
-#
 # Returns: a data table of smoothed data
-#
 readSmoothData <- function()
 {
-  obs <-  read.table("obs/pmm_all_1610155_15")
- 
-  res <- c()
-  for (q in 1:nrow(obs))
-    res <- rbind(res, c(obs[q,1], model(obs[q,1]),#-0.38 +
-    #                    apmag + 2.5*log10(s/v_circle_square(obs[q,1], incl)),
-                        obs[q,2]
-                         ))
-  write.table(res,"model.dat", col.names=F, row.names=F)
-  return(res)
-  #return(obs)
+  if (is.null(smoothd))
+  {
+    obs <-  read.table("obs/pmm_all_1610155_15")
+    
+    res <- c()
+    for (q in 1:nrow(obs))
+      res <- rbind(res, c(obs[q,1],
+                          ellmodel(obs[q,1]),
+                          obs[q,2]
+      ))
+    write.table(res,"smoothd.data", col.names=F, row.names=T)
+    return(res)
+  }
+  return(NULL)
 }
-res <- readSmoothData()
+smoothd  <- readSmoothData()
+
+# RAW DATA
+# col 1: index number
+# col 2: folded JD - phase
+# col 3: JD
+# col 4: C data
+# col 5: O data
+rawd <-c()
 
 # This function reads raw data
 # and returns a data fold
@@ -393,15 +408,118 @@ readRawData <- function()
       t,                          # number
       w[t, 1] %% ORBIT.P,         # folded JD - phase
       w[t, 1],                    # JD
-      model(w[t, 1] %% ORBIT.P),  # C data
+      ellmodel(w[t, 1] %% ORBIT.P),  # C data
       w[t, 2]                     # O data
     ))
   }
-  write.table(sp,"rawdata", row.names=F, col.names=F)
+  write.table(sp,"rawd.data", row.names=F, col.names=F)
   return(sp)
   #return(sp[order(sp[,1]),])
 }
 rawd <- readRawData()
+
+
+
+
+# PLOT FUNCTIONS
+
+# Function: plot model
+plot.model <- function(save=F)
+{
+  par(mfrow=c(1,1))
+  # plot Smooth vs Model
+  plot(smoothd[,1], smoothd[,2], col=rgb(0,0,0), pch = 18, cex=0.5,
+       main="GU CMa light curve",
+       ylab="apparent magnitude (m)",
+       xlab="period (days)",
+       ylim=c(6.5,6.18))
+  points(smoothd[,1], smoothd[,3], col=rgb(0,0,1), pch =18, cex=0.5)
+  #text(0.35,7.5,col=rgb(0,0,0),"model")
+  #text(0.35,7.7, col=rgb(0,0,1),"data")
+  #legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
+  #       col=c(rgb(0,0,0), rgb(0,0,1)) )
+  #text(1.1,6.70, "parameters", adj=0)
+  #text(1.1,6.75, paste("inclination", ORBIT.INCL * 180 / pi), adj=0)
+  #text(1.1,6.80, paste("radii", A.big.axis, ";", B.big.axis), adj=0)
+  #text(1.1,6.85, paste("separation", ORBIT.R), adj=0)
+  #text(1.1,6.90, paste("lux factors", A.lux, ";", B.lux), adj=0)
+  #text(1.1,6.95, paste("period", ORBIT.P), adj=0)
+  #text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
+  
+  # save to pdf
+  if (save)
+  {
+    filename <- paste("plot.model",
+                      "incl", ORBIT.INCL * 180 / pi,
+                      "major",A.big.axis, B.big.axis,
+                      "ellipticity", round(A.small.axis / A.big.axis, 4),
+                      round(B.small.axis / B.big.axis, 4), 
+                      "lux",A.lux,B.lux,
+                      "phase",round(ORBIT.PHI0, 4),
+                      sep="_")
+    
+    # save this plot to pdf
+    dev.copy2pdf(
+      file = paste0("plots/",filename,".pdf"),
+      width=16, height=8)
+    
+    # save to eps
+    dev.copy2eps(
+      file=paste0("plots/",filename,".eps"),
+      width=16, height=8)
+  }
+}
+#plot.model(save=T)
+
+
+#Function: period.fold
+# Paramters:
+# indexe -subset of indexes
+# period to fold
+period.fold <- function(indexes, p, save=F)
+{
+  res <- c()
+  # folding
+  for (t in indexes)
+  {
+    res <- rbind(res,c(
+      rawd[t,3],              #JD
+      rawd[t,3] %% ORBIT.P %% p,         # folded JD
+      rawd[t,5]-rawd[t,4]     # O-C
+      ))
+  }
+  
+  #return(sp[order(sp[,1]),])
+  res <- res[order(res[,2]),]
+  #write.table(res)
+  
+  par(mfrow=c(1,1))
+  plot(res[,2], res[,3],
+       main=paste("Period fold P=",p),
+       xlab="time (days)",
+       ylab="app. mag. (m)",
+      # type="l",
+       pch=18,
+       cex=0.6
+       )
+  if (save)
+  {
+    filename <- paste("period.fold",
+                      "indexes", indexes,
+                      "p",p,
+                      sep="_")
+    
+    dev.copy2pdf(
+      file = paste0("plots/",filename,".pdf"),
+      width=16, height=8)
+    
+    # save to eps
+    dev.copy2eps(
+      file=paste0("plots/",filename,".eps"),
+      width=16, height=8)
+  }
+  return(invisible(res))
+}
 
 draw <- function()
 {
@@ -422,13 +540,15 @@ draw <- function()
   # set plot parameters for 4 graphs on a page
   par(mfrow=c(3,2))
   
+  
+  ### plot.model function body
   # plot Smooth vs Model
-  plot(res[,1], res[,2], col=rgb(0,0,0), pch = 18, cex=0.5,
+  plot(smoothd[,1], smoothd[,2], col=rgb(0,0,0), pch = 18, cex=0.5,
        main="GU CMa light curve",
        ylab="apparent magnitude (m)",
        xlab="period (days)",
        ylim=c(6.55,6.15))
-  points(res[,1], res[,3], col=rgb(0,0,1), pch =18, cex=0.5)
+  points(smoothd[,1], smoothd[,3], col=rgb(0,0,1), pch =18, cex=0.5)
   #text(0.35,7.5,col=rgb(0,0,0),"model")
   #text(0.35,7.7, col=rgb(0,0,1),"data")
   #legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
@@ -442,7 +562,7 @@ draw <- function()
   #text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
   
   # plot Residuals Smooth vs Model
-  plot(res[,1],abs(res[,2]-res[,3]), pch=".", type="l",
+  plot(smoothd[,1],abs(smoothd[,2]-smoothd[,3]), pch=".", type="l",
        main="Residuals (smoothed data)",
        ylab="app. magn. (m)",
        xlab="period (days)")
@@ -526,7 +646,7 @@ draw <- function()
                    #from=0.1,
                    #to=50,
   )
-  text(9,120, paste("peaks at:",
+  text(8,60, paste("peaks at:",
                      round(GM2013.lsfreq$peak.at[1],4),
                      round(GM2013.lsfreq$peak.at[2],4)))
   
@@ -607,7 +727,7 @@ lcmodel <- function(phases, plot=FALSE)
   }
   return(v)
 }
-#starmodel <- lcmodel(res[,1], plot=T)
+# starmodel <- lcmodel(res[,1], plot=T)
 
 
 # # Function: minimize
@@ -617,5 +737,5 @@ lcresid<- function(z)
   return(sum((res[,3]-z+lcmodel(res[,1]))^2)/nrow(res)^2)
 }
 
-# Function: rsdls
+
 
