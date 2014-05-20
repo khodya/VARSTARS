@@ -11,9 +11,9 @@
 
 require("lomb")
 
-ORBIT.INCL <- 67 * pi / 180
+ORBIT.INCL <- 89 * pi / 180
 ORBIT.R <- 3
-ORBIT.ECC <- 0.000001
+ORBIT.ECC <- 0.0000
 #ORBIT.ECC <- 0.5
 ORBIT.PHI0 <- 9.2 * pi / 180
 ORBIT.T0 <- 0.83
@@ -22,17 +22,17 @@ ORBIT.P <- 1.610157
 # Component parameters
 A.big.axis <- 1.03
 A.small.axis <- 1* A.big.axis
-A.lux <- 1.2
+A.lux <- 1
 
 B.big.axis <- 0.97
-B.small.axis <- 0.93 * B.big.axis
-B.lux <- 1.1
+B.small.axis <- 1 * B.big.axis
+B.lux <- 0.9
 
 # Photometric parameters
 app.mag <- 6.6
 
 # Common parameters
-ZERO.POINT <- -0.375
+ZERO.POINT <- -0.372
 indexes.2010 <- 1:832
 
 # model parameters:
@@ -210,7 +210,7 @@ v_ellipse_square <- function(t, incl)
   phi <- 2.0 * pi / ORBIT.P * t   + ORBIT.PHI0
   
   # axises change its angle
-  if ( incl < pi / 2 )
+  if ( incl <= pi / 2 )
   {
     # phi.plane - angle of star rotation in plane of orbit
     # from cosines theorem for paralactic triangles
@@ -236,11 +236,13 @@ v_ellipse_square <- function(t, incl)
     B.b <- B.b.true
   }
   
+  
   s <- A.lux * pi * A.a * A.b +
     B.lux * pi * B.a * B.b
   
   # visible distance
   vd <- vdist(ORBIT.INCL, phi.plane)
+
   
   
   #upper edge
@@ -254,7 +256,7 @@ v_ellipse_square <- function(t, incl)
   max <- B.a
   is_rad1_max <- FALSE
   
-  if ( B.a < A.a)
+  if ( B.a <= A.a)
   {
     min <- B.a
     max <- A.a
@@ -289,11 +291,11 @@ v_ellipse_square <- function(t, incl)
   # full eclipse (case 5)
   if ( is_rad1_max && vd + B.a - A.a <= eps)
   {
-    if ( phi - pi <= eps )
+     if ( phi - pi <= eps )
       return( light_up * pi * A.a * A.b )
-    return( light_up * pi * B.a * B.b +
-              light_down * pi * A.a * A.b -
-              light_down * pi * B.a * B.b)
+     return( light_up * pi * B.a * B.b +
+               light_down * pi * A.a * A.b -
+               light_down * pi * B.a * B.b)
   } 
   
   # stars are overlapping (inludes subcases )
@@ -310,30 +312,45 @@ v_ellipse_square <- function(t, incl)
   zeta1 <- atan( A.b / A.a * tan(psi1))
   zeta2 <- atan( B.b / B.a * tan(psi2))
   
+  #za <- A.a*cos(zeta1)
+  #zb <- B.a*cos(zeta2)
+  #za <- sqrt((A.a*cos(zeta1))^2 + (A.b*sin(zeta1))^2) * cos(zeta1)
+  #zb <- sqrt((B.a*cos(zeta2))^2 + (B.b*sin(zeta2))^2) * cos(zeta2)
+  
   if ( is_rad1_max )
   {
     #segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
     segm1 <- A.a**2 * (2 * zeta1 - sin(2 * zeta1)) / 2
+#     segm1 <- za**2 * (2 * zeta1 - sin(2 * zeta1)) / 2
+    
     #segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
     segm2 <- B.a**2 * (2 * zeta2 -sin(2 * zeta2)) / 2
+#     segm2 <- zb**2 * (2 * zeta2 -sin(2 * zeta2)) / 2
+    
     #semisquare <- pi * rad2**2 / 2 
     semisquare <- pi * B.a**2 / 2
+#     semisquare <- pi * zb**2 / 2
+    
     #obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
     obtuse_arc <- B.a**2 * (2 * zeta2) / 2
+#     obtuse_arc <- zb**2 * (2 * zeta2) / 2
+    
     #triangle <- rad2**2 * sin( -2 * psi2) / 2
     triangle <- B.a**2 * sin( -2 * zeta2 ) / 2
+#     triangle <- zb**2 * sin( -2 * zeta2 ) / 2
     
     #if ( psi2 - pi / 2 < eps )
+    if (abs(zeta2 - pi /2) <= eps)
+    {
+      return( s - light_down * ( semisquare + segm1 ) )
+    }
     if ( zeta2 - pi / 2 < eps)
     {
       return( s - light_down * (segm1 + segm2) )
     }		   
     
     #if ( abs( psi2 - pi / 2 ) <= eps )
-    if (abs(zeta2 - pi /2) <= eps)
-    {
-      return( s - light_down * ( semisquare + segm1 ) )
-    }
+    
     
     return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
   }
@@ -493,15 +510,27 @@ period.fold <- function(indexes, p, save=F)
   res <- res[order(res[,2]),]
   #write.table(res)
   
+  
+  fres <- filter(res, rep(1,10)/10)
+  
   par(mfrow=c(1,1))
-  plot(res[,2], res[,3],
+  xticks <- seq(0,max(res[,2]),by=0.01)
+  yticks <- seq(-0.1,max(res[,3]),by=0.01)
+  axis(1, at=xticks)
+  axis(2, at=yticks)
+  
+  
+  
+  plot(res[,2], filter(res[,3], ),
        main=paste("Period fold P=",p),
        xlab="time (days)",
        ylab="app. mag. (m)",
-      # type="l",
+       #type="l",
        pch=18,
-       cex=0.6
+       cex=0.6,
+       panel.first=grid(length(xticks), length(yticks), equilogs=T)
        )
+ 
   if (save)
   {
     filename <- paste("period.fold",
@@ -520,6 +549,42 @@ period.fold <- function(indexes, p, save=F)
   }
   return(invisible(res))
 }
+
+
+
+# Function: plot.curve
+# This functions plots smoothed data foled 1.61 period
+plot.curve <- function(save=T)
+{
+  par(mfrow=c(1,1))
+  plot(smoothd[,1], smoothd[,3], col=rgb(0,0,1), pch = 18, cex=0.5,
+       main="GU CMa light curve",
+       ylab="apparent magnitude (m)",
+       xlab="period (days)",
+       ylim=c(6.55,6.15))
+  
+  if (save)
+  {
+    filename <- paste("curve_folded_1.6",
+                      "incl", ORBIT.INCL * 180 / pi,
+                      "major",A.big.axis, B.big.axis,
+                      "ellipticity", round(A.small.axis / A.big.axis, 4),
+                      round(B.small.axis / B.big.axis, 4), 
+                      "lux",A.lux,B.lux,
+                      "phase",round(ORBIT.PHI0, 4),
+                      sep="_")
+    
+    dev.copy2pdf(
+      file = paste0("plots/",filename,".pdf"),
+      width=16, height=8)
+    
+    # save to eps
+    dev.copy2eps(
+      file=paste0("plots/",filename,".eps"),
+      width=16, height=8)
+  }
+}
+
 
 draw <- function()
 {
@@ -562,7 +627,7 @@ draw <- function()
   #text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
   
   # plot Residuals Smooth vs Model
-  plot(smoothd[,1],abs(smoothd[,2]-smoothd[,3]), pch=".", type="l",
+  plot(smoothd[,1],smoothd[,3]-smoothd[,2], pch=".", type="l",
        main="Residuals (smoothed data)",
        ylab="app. magn. (m)",
        xlab="period (days)")
@@ -713,7 +778,7 @@ lcmodel <- function(phases, plot=FALSE)
 { 
   v <- c()
   for (q in phases) 
-    v <- rbind(v, model(q))
+    v <- rbind(v, ellmodel(q))
   
   if (plot)
   {
@@ -722,7 +787,10 @@ lcmodel <- function(phases, plot=FALSE)
          main="Model",
          xlab="phases of a period",
          ylab="app. mag. (m)",
-         ylim=c(max(v)+0.15,min(v)-0.15))
+         ylim=c(max(v)+0.15,min(v)-0.15),
+         #pch=1,
+         type="l"
+         )
     return(invisible(v))
   }
   return(v)
@@ -737,5 +805,24 @@ lcresid<- function(z)
   return(sum((res[,3]-z+lcmodel(res[,1]))^2)/nrow(res)^2)
 }
 
+
+solve.mag <- function()
+{
+  # mag constant
+  mc <- 15
+  
+  # given m(a+b)
+  m.ab <- 6.93
+  
+  # fluxes factor
+  k <- (B.lux*B.big.axis^2)/(A.lux*A.big.axis^2)
+  
+  # flux a
+  f.a <- 1/(1+k)*10^((mc- m.ab)/2.5)
+  
+  m.a <- -2.5*log10(f.a) + mc
+  m.b <- m.a + 2.5*log10(1/k)
+  return(c(m.a, m.b))
+}
 
 
