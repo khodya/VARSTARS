@@ -11,7 +11,7 @@
 
 require("lomb")
 
-ORBIT.INCL <- 89 * pi / 180
+ORBIT.INCL <- 90 * pi / 180
 ORBIT.R <- 3
 ORBIT.ECC <- 0.0000
 #ORBIT.ECC <- 0.5
@@ -20,13 +20,13 @@ ORBIT.T0 <- 0.83
 ORBIT.P <- 1.610157
 
 # Component parameters
-A.big.axis <- 1.03
+A.big.axis <- 1.5
 A.small.axis <- 1* A.big.axis
 A.lux <- 1
 
-B.big.axis <- 0.97
+B.big.axis <- 1
 B.small.axis <- 1 * B.big.axis
-B.lux <- 0.9
+B.lux <- 1
 
 # Photometric parameters
 app.mag <- 6.6
@@ -99,103 +99,112 @@ vdist <- function(incl, pa)
 # t -time (phase of a period T)
 # incl -inclination angle
 
-# v_circle_square <- function(t, incl)
-# {
-# 	# square terms
-# 	s <- 0
-# 	
-# 	s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
-# 
-# 	# current positional angle of a star B
-# 	phi <- 2 * pi / P * t + phase
-# 
-# 	# visible distance
-# 	vd <- vdist(incl, phi)
-#   #print("vd: ", vd)
-#   
-# 	#upper edge
-# 	upper_edge <- rad1 + rad2
-# 
-# 	# find min of radii
-# 	min <- rad1
-# 	max <- rad2
-# 	is_rad1_max <- FALSE
-# 
-# 	if ( rad2 < rad1 )
-# 	{
-# 		min <- rad2
-# 		max <- rad1 
-# 		is_rad1_max <- TRUE
-# 	}		
-# 
-# 	# define coef intensity
-# 	light_down <- 0
-# 	light_up <- 0
-# 
-# 	if ( phi - pi <= eps )
-# 	{
-# 		light_down <- lux2
-# 		light_up <- lux1
-# 	}
-# 	else
-# 	{
-# 		light_down <- lux1
-# 		light_up <- lux2
-# 	}
-# 
-# 	# stars are contiguous to each other
-# 	if ( abs( upper_edge - vd ) <= eps )
-# 	{	
-# 		return(s)
-# 	}
-# 
-# 	# stars are far away from each other
-# 	if ( vd > upper_edge )
-# 	{
-# 		return(s)
-# 	}
-# 		
-# 	# full eclipse (case 5)
-# 	if ( is_rad1_max && vd + rad2 - rad1 <= eps )
-# 	{
-# 		if ( phi - pi <= eps )
-# 		   return( light_up * pi * rad1**2 )
-# 		return( light_up * pi * rad2**2 +
-#               light_down * pi * rad1**2 -
-#               light_down * pi * rad2**2)
-# 	} 
-# 
-# 	# stars are overlapping (inludes subcases )
-# 	
-# 	arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
-# 	arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
-# 
-# 	psi1 <- acos( arg1 )
-# 	psi2 <- acos( arg2 )
-# 
-# 	if ( is_rad1_max )
-# 	{
-# 		segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
-# 		segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
-# 		semisquare <- pi * rad2**2 / 2 
-# 		obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
-# 		triangle <- rad2**2 * sin( -2 * psi2) / 2
-# 		
-# 		if ( psi2 - pi / 2 < eps )
-# 		{
-# 		   return( s - light_down * (segm1 + segm2) )
-# 		}		   
-# 
-# 		if ( abs( psi2 - pi / 2 ) <= eps )
-# 		{
-# 		   return( s - light_down * ( semisquare + segm1 ) )
-# 		}
-# 
-# 		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
-# 	}
-# 	
-#   return(0)
-# }
+v_circle_square <- function(t, incl)
+{
+	# square terms
+	s <- 0
+	
+  rad1 <- A.big.axis
+  rad2 <- B.big.axis
+  lux1 <- A.lux
+  lux2 <- B.lux
+  
+  P <- ORBIT.P
+  
+  phase <- ORBIT.PHI0
+  
+	s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
+
+	# current positional angle of a star B
+	phi <- 2 * pi / P * t + phase
+
+	# visible distance
+	vd <- vdist(incl, phi)
+  #print("vd: ", vd)
+  
+	#upper edge
+	upper_edge <- rad1 + rad2
+
+	# find min of radii
+	min <- rad1
+	max <- rad2
+	is_rad1_max <- FALSE
+
+	if ( rad2 <= rad1 )
+	{
+		min <- rad2
+		max <- rad1 
+		is_rad1_max <- TRUE
+	}		
+
+	# define coef intensity
+	light_down <- 0
+	light_up <- 0
+
+	if ( phi - pi <= eps )
+	{
+		light_down <- lux2
+		light_up <- lux1
+	}
+	else
+	{
+		light_down <- lux1
+		light_up <- lux2
+	}
+
+	# stars are contiguous to each other
+	if ( abs( upper_edge - vd ) <= eps )
+	{	
+		return(s)
+	}
+
+	# stars are far away from each other
+	if ( vd > upper_edge )
+	{
+		return(s)
+	}
+		
+	# full eclipse (case 5)
+	if ( is_rad1_max && vd + rad2 - rad1 <= eps )
+	{
+		if ( phi - pi <= eps )
+		   return( light_up * pi * rad1**2 )
+		return( light_up * pi * rad2**2 +
+              light_down * pi * rad1**2 -
+              light_down * pi * rad2**2)
+	} 
+
+	# stars are overlapping (inludes subcases )
+	
+	arg1 <- ( vd**2 + rad1**2 - rad2**2 ) / 2 / vd / rad1
+	arg2 <- ( vd**2 + rad2**2 - rad1**2 ) / 2 / vd / rad2
+
+	psi1 <- acos( arg1 )
+	psi2 <- acos( arg2 )
+
+	if ( is_rad1_max )
+	{
+		segm1 <- rad1**2 * ( 2 * psi1 - sin(2 * psi1) ) / 2
+		segm2 <- rad2**2 * ( 2 * psi2 - sin(2 * psi2) ) / 2
+		semisquare <- pi * rad2**2 / 2 
+		obtuse_arc <- rad2**2 * ( 2 * psi2 ) / 2
+		triangle <- rad2**2 * sin( -2 * psi2) / 2
+		
+		if ( psi2 - pi / 2 < eps )
+		{
+		   return( s - light_down * (segm1 + segm2) )
+		}		   
+
+		if ( abs( psi2 - pi / 2 ) <= eps )
+		{
+		   return( s - light_down * ( semisquare + segm1 ) )
+		}
+
+		return( s - light_down * ( segm1 + obtuse_arc + triangle ) )
+	}
+	
+  return(0)
+}
 
 
 # Function: v_ellipse_square
@@ -373,6 +382,29 @@ ellmodel <- function(t)
       B.lux * pi * B.big.axis * B.small.axis
   #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
   val <- ZERO.POINT +  app.mag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
+  #val <- 12.95198 +  app.mag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
+  return(val)
+}
+
+
+# Function: cmodel()
+# Circle modeling function
+#
+# Input paramteres:
+# t -time (phase of a period T)
+cmodel <- function(t)
+{
+  rad1 <- A.big.axis
+  rad2 <- B.big.axis
+  
+  lux1 <- A.lux
+  lux2 <- B.lux
+  
+  s <- lux1 * pi * rad1**2 + lux2 * pi * rad2**2
+#   s <- A.lux * pi * A.big.axis * A.small.axis +
+#     B.lux * pi * B.big.axis * B.small.axis
+  #val <- -0.37 + apmag + 2.5*log10(s/v_circle_square(t, incl))
+  val <- ZERO.POINT +  app.mag + 2.5*log10(s/v_circle_square(t, ORBIT.INCL))
   #val <- 12.95198 +  app.mag + 2.5*log10(s/v_ellipse_square(t, ORBIT.INCL))
   return(val)
 }
@@ -778,7 +810,7 @@ lcmodel <- function(phases, plot=FALSE)
 { 
   v <- c()
   for (q in phases) 
-    v <- rbind(v, ellmodel(q))
+    v <- rbind(v, cmodel(q))
   
   if (plot)
   {
