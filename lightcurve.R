@@ -11,7 +11,7 @@
 
 require("lomb")
 
-ORBIT.INCL <- 90 * pi / 180
+ORBIT.INCL <- 67 * pi / 180
 ORBIT.R <- 3
 ORBIT.ECC <- 0.0000
 #ORBIT.ECC <- 0.5
@@ -20,13 +20,13 @@ ORBIT.T0 <- 0.83
 ORBIT.P <- 1.610157
 
 # Component parameters
-A.big.axis <- 1.5
+A.big.axis <- 1.03
 A.small.axis <- 1* A.big.axis
 A.lux <- 1
 
-B.big.axis <- 1
-B.small.axis <- 1 * B.big.axis
-B.lux <- 1
+B.big.axis <- 0.97
+B.small.axis <- 0.93 * B.big.axis
+B.lux <- 0.9
 
 # Photometric parameters
 app.mag <- 6.6
@@ -543,7 +543,7 @@ period.fold <- function(indexes, p, save=F)
   #write.table(res)
   
   
-  fres <- filter(res, rep(1,10)/10)
+  #fres <- filter(res, rep(1,10)/10)
   
   par(mfrow=c(1,1))
   xticks <- seq(0,max(res[,2]),by=0.01)
@@ -553,7 +553,7 @@ period.fold <- function(indexes, p, save=F)
   
   
   
-  plot(res[,2], filter(res[,3], ),
+  plot(res[,2], res[,3],
        main=paste("Period fold P=",p),
        xlab="time (days)",
        ylab="app. mag. (m)",
@@ -635,8 +635,8 @@ draw <- function()
                    sep="_")
   
   # set plot parameters for 4 graphs on a page
-  par(mfrow=c(3,2))
-  
+ # par(mfrow=c(3,2))
+  par(mfrow=c(1,1))
   
   ### plot.model function body
   # plot Smooth vs Model
@@ -663,6 +663,8 @@ draw <- function()
        main="Residuals (smoothed data)",
        ylab="app. magn. (m)",
        xlab="period (days)")
+  
+  
   
   # 
   #w <- read.table("obs/all_10_13")
@@ -737,6 +739,8 @@ draw <- function()
        main="Residuals (2013 raw data)",
        ylab="apparent magnitude (m)",
        xlab="JD - JD2000",)
+  
+  
   GM2013.lsfreq <- lsp(GM2013.dat,
                    time = GM2013.time,
                    type="frequency",
@@ -747,7 +751,7 @@ draw <- function()
                      round(GM2013.lsfreq$peak.at[1],4),
                      round(GM2013.lsfreq$peak.at[2],4)))
   
-  
+  stopifnot(1==2)
   # save this plot to pdf
   dev.copy2pdf(
     file = paste0("plots/",filename,".pdf"),
@@ -828,6 +832,7 @@ lcmodel <- function(phases, plot=FALSE)
   return(v)
 }
 # starmodel <- lcmodel(res[,1], plot=T)
+
 
 
 # # Function: minimize
