@@ -884,11 +884,11 @@ analyze.2010 <- function()
   # analyze uneven data
   par(mfrow=c(2,1))
   ts.lsp <- lsp(coredata(ts.2010), time=index(ts.2010), type="frequency",
-                to=15, ofac=1)
+                from=0.0, to=15, ofac=1)
   
   # analyze white noise
   even.lsp <- lsp(coredata(even.2010), time=index(even.2010), type="frequency",
-                  to=15, ofac=1)
+                 from=0.0, to=15, ofac=1)
   dev.copy2pdf(
     file = "plots/lspg_2010.pdf",
     width=16, height=8)
@@ -896,3 +896,28 @@ analyze.2010 <- function()
   
 }
 
+analyze.2013 <- function()
+{
+  ts.2013 <- zoo(rawd[i.2013,5]-rawd[i.2013,4], rawd[i.2013,3])
+  
+  min.interval.2013 <- min(diff(rawd[i.2013,3]))
+  even.2013 <- merge(ts.2013,
+                     zoo(, seq(start(ts.2013), end(ts.2013), by=min.interval)),
+                     all=TRUE)
+  even.2013[is.na(even.2013)] <- 0
+  even.2013[even.2013!=0] <- 1
+  
+  # analyze uneven data
+  par(mfrow=c(2,1))
+  ts.lsp.2013 <- lsp(coredata(ts.2013), time=index(ts.2013), type="frequency",
+                from=0.0, to=15, ofac=1)
+  
+  # analyze white noise
+  even.lsp.2013 <- lsp(coredata(even.2013), time=index(even.2013), type="frequency",
+                  from=0.0, to=15, ofac=1)
+  dev.copy2pdf(
+    file = "plots/lspg_2013.pdf",
+    width=16, height=8)
+  
+  
+}
