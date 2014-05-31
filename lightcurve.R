@@ -10,6 +10,7 @@
 # ORBIT.P period (days)
 
 require("lomb")
+require("zoo")
 
 ORBIT.INCL <- 67 * pi / 180
 ORBIT.R <- 3
@@ -450,6 +451,8 @@ rawd <-c()
 readRawData <- function()
 {
   w <- read.table("obs/all_10_13")
+  #w <- w[order(w[1,]),]
+  
   sp <- c()
   for (t in 1:nrow(w))
   {
@@ -462,8 +465,8 @@ readRawData <- function()
     ))
   }
   write.table(sp,"rawd.data", row.names=F, col.names=F)
-  return(sp)
-  #return(sp[order(sp[,1]),])
+  #return(sp)
+  return(sp[order(sp[,3]),])
 }
 rawd <- readRawData()
 
@@ -635,21 +638,21 @@ draw <- function()
                    sep="_")
   
   # set plot parameters for 4 graphs on a page
- # par(mfrow=c(3,2))
-  par(mfrow=c(1,1))
+par(mfrow=c(3,2))
+#   par(mfrow=c(2,1))
   
   ### plot.model function body
   # plot Smooth vs Model
-  plot(smoothd[,1], smoothd[,2], col=rgb(0,0,0), pch = 18, cex=0.5,
+  plot(smoothd[,1], smoothd[,2], col=rgb(0,0,0), pch = 2, cex=0.5,
        main="GU CMa light curve",
        ylab="apparent magnitude (m)",
-       xlab="period (days)",
+       xlab="time (days)",
        ylim=c(6.55,6.15))
-  points(smoothd[,1], smoothd[,3], col=rgb(0,0,1), pch =18, cex=0.5)
+  points(smoothd[,1], smoothd[,3], col=rgb(0,0,1), pch =1, cex=0.5)
   #text(0.35,7.5,col=rgb(0,0,0),"model")
   #text(0.35,7.7, col=rgb(0,0,1),"data")
-  #legend("bottomleft", c("model", "data"), pch=c(18, 18), cex=0.5,
-  #       col=c(rgb(0,0,0), rgb(0,0,1)) )
+  #legend("bottomleft", c("model", "data"), pch=c(2, 1), cex=0.5,
+   #      col=c(rgb(0,0,0), rgb(0,0,1)) )
   #text(1.1,6.70, "parameters", adj=0)
   #text(1.1,6.75, paste("inclination", ORBIT.INCL * 180 / pi), adj=0)
   #text(1.1,6.80, paste("radii", A.big.axis, ";", B.big.axis), adj=0)
@@ -657,15 +660,18 @@ draw <- function()
   #text(1.1,6.90, paste("lux factors", A.lux, ";", B.lux), adj=0)
   #text(1.1,6.95, paste("period", ORBIT.P), adj=0)
   #text(1.1,7.0, paste("initial phase", ORBIT.PHI0 * 180 / pi), adj=0)
-  
+
+ 
   # plot Residuals Smooth vs Model
   plot(smoothd[,1],smoothd[,3]-smoothd[,2], pch=".", type="l",
        main="Residuals (smoothed data)",
-       ylab="app. magn. (m)",
-       xlab="period (days)")
+       ylab="apparent magnitude (m)",
+       xlab="time (days)")
   
   
-  
+ # dev.copy2pdf(file = "lc.pdf",width=16, height=16)
+ # stopifnot(1==2)
+
   # 
   #w <- read.table("obs/all_10_13")
   #sp <- c()
@@ -719,7 +725,7 @@ draw <- function()
                         time = GM.time,
                         type="frequency",
                         #from=0.1,
-                        #to=50,
+                        to=15,
   )
   text(20,120, paste("peaks at:",
                      round(GM.lsfreq$peak.at[1],4),
@@ -751,7 +757,7 @@ draw <- function()
                      round(GM2013.lsfreq$peak.at[1],4),
                      round(GM2013.lsfreq$peak.at[2],4)))
   
-  stopifnot(1==2)
+  
   # save this plot to pdf
   dev.copy2pdf(
     file = paste0("plots/",filename,".pdf"),
@@ -862,4 +868,31 @@ solve.mag <- function()
   return(c(m.a, m.b))
 }
 
+
+
+analyze.2010 <- function()
+{
+  ts.2010 <- zoo(rawd[i.2010,5]-rawd[i.2010,4], rawd[i.2010,3])
+  
+  min.interval <- min(diff(rawd[i.2010,3]))
+  even.2010 <- merge(ts.2010,
+                     zoo(, seq(start(ts.2010), end(ts.2010), by=min.interval)),
+                     all=TRUE)
+  even.2010[is.na(even.2010)] <- 0
+  even.2010[even.2010!=0] <- 1
+  
+  # analyze uneven data
+  par(mfrow=c(2,1))
+  ts.lsp <- lsp(coredata(ts.2010), time=index(ts.2010), type="frequency",
+                to=15, ofac=1)
+  
+  # analyze white noise
+  even.lsp <- lsp(coredata(even.2010), time=index(even.2010), type="frequency",
+                  to=15, ofac=1)
+  dev.copy2pdf(
+    file = "plots/lspg_2010.pdf",
+    width=16, height=8)
+  
+  
+}
 
