@@ -921,3 +921,29 @@ analyze.2013 <- function()
   
   
 }
+
+analyze.all <- function()
+{
+  ts.all <- zoo(rawd[,5]-rawd[,4], rawd[,3])
+  
+  min.interval <- min(diff(rawd[,3]))
+  even.all <- merge(ts.all,
+                     zoo(, seq(start(ts.all), end(ts.all), by=min.interval)),
+                     all=TRUE)
+  even.all[is.na(even.all)] <- 0
+  even.all[even.all!=0] <- 1
+  
+  # analyze uneven data
+  par(mfrow=c(2,1))
+  ts.lsp.all <- lsp(coredata(ts.all), time=index(ts.all), type="frequency",
+                     from=0.0, to=15, ofac=1)
+  
+  # analyze white noise
+  even.lsp.all <- lsp(coredata(even.all), time=index(even.all), type="frequency",
+                       from=0.0, to=15, ofac=1)
+  dev.copy2pdf(
+    file = "plots/lspg_all.pdf",
+    width=16, height=8)
+  
+  
+}
